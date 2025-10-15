@@ -16,7 +16,7 @@ import com.rabbitmq.client.ConnectionFactory;
 import pcd.ass3.sudoku.domain.Messages;
 import pcd.ass3.sudoku.domain.Messages.BoardState;
 import pcd.ass3.sudoku.domain.Messages.CellUpdate;
-import pcd.ass3.sudoku.utils.Pair;
+import pcd.ass3.sudoku.utils.Pos;
 
 public class StreamRabbitDistributor implements DataDistributor {
 
@@ -103,7 +103,7 @@ public class StreamRabbitDistributor implements DataDistributor {
     }
 
     @Override
-    public void joinBoard(String nickname, String boardName, Map<Pair, Integer> initBoard) {
+    public void joinBoard(String nickname, String boardName, Map<Pos, Integer> initBoard) {
       this.boardName = Optional.of(boardName);
       String edits = queueNameFor(boardName, UpdateType.BOARD_UPDATE);
       String usersc = queueNameFor(boardName, UpdateType.USER_UPDATE);
