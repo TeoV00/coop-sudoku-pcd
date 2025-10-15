@@ -1,0 +1,7 @@
+.gradle
+build
+.vscode
+.DS_Store
+gradlew*
+gradle/wrapper/gradle-wrapper.jar
+gradle/libs.versions.toml
