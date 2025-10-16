@@ -1,6 +1,7 @@
 package pcd.ass3.sudoku;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,11 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
-
-import pcd.ass3.sudoku.domain.Messages;
-import pcd.ass3.sudoku.domain.Messages.BoardState;
-import pcd.ass3.sudoku.domain.Messages.CellUpdate;
-import pcd.ass3.sudoku.utils.Pos;
+import com.rabbitmq.client.Delivery;
 
 public class StreamRabbitDistributor implements DataDistributor {
 
@@ -26,9 +23,10 @@ public class StreamRabbitDistributor implements DataDistributor {
     boolean notAutoDelete, 
     Map<String,Object> params){};
 
-    private final String BOARD_REGISTRY = "board-registry";
-    private final String BOARD_UPDATE = "edits";
-    private final String USER_UPDATE = "user-cursors";
+  private final String BOARD_REGISTRY = "board-registry";
+  private final String BOARD_UPDATE = "edits";
+  private final String USER_UPDATE = "user-cursors";
+  private static final int PREFETCH_COUNT = 200;
 
   private SharedDataListener updateListener;
   private Optional<String> boardName;
@@ -56,13 +54,13 @@ public class StreamRabbitDistributor implements DataDistributor {
     }
 
     @Override
-    public void shareUpdate(Messages.UserEdit edits) {
-      toJson(edits).ifPresent(json -> publishTo(json, BOARD_UPDATE));
+    public void shareUpdate(JsonData edits) {
+      publishTo(edits.getJsoString(), BOARD_UPDATE);
     }
 
     @Override
-    public void updateCursor(Messages.UserInfo userInfo) {
-      toJson(userInfo).ifPresent(json -> publishTo(json, USER_UPDATE));
+    public void updateCursor(JsonData userInfo) {
+      publishTo(userInfo.getJsoString(), USER_UPDATE);
     }
 
     private Optional<String> toJson(Object obj) {
@@ -93,67 +91,37 @@ public class StreamRabbitDistributor implements DataDistributor {
     }
 
     @Override
-    public void joinBoard(String nickname, String boardName, Map<Pos, Integer> initBoard) {
+    public void joinBoard(String nickname, String boardName) {
       this.boardName = Optional.of(boardName);
       String edits = concat(boardName, BOARD_UPDATE);
       String usersc = concat(boardName, USER_UPDATE);
-      Optional<String> jsonBoard = Optional.empty();
-      try {
-        if (!queueExists(edits)) {
-          BoardState board = new Messages.BoardState(initBoard);
-          jsonBoard = toJson(board);
-        }
-      } catch (TimeoutException exc) {
-        this.updateListener.notifyErrors("Join board error", exc);
-      }
+      // Optional<String> jsonBoard = Optional.empty();
+      // try {
+      //   if (!queueExists(edits)) {
+      //     BoardState board = new Messages.BoardState(initBoard);
+      //     jsonBoard = toJson(board);
+      //   }
+      // } catch (TimeoutException exc) {
+      //   this.updateListener.notifyErrors("Join board error", exc);
+      // }
 
       declareQueue(edits);
       declareQueue(usersc);
-
-      ObjectMapper mapper = new ObjectMapper();
-
       consumeMessages(edits, msg -> {
         try {
-          Messages.UserEdit recvEdits = mapper.readValue(msg, Messages.UserEdit.class);
-          if (null == recvEdits.type()) {
-              updateListener.notifyErrors("Message unknown", null);
-          } else switch (recvEdits.type()) {
-                case BOARD_CREATION -> {
-                    BoardState board = mapper.readValue(recvEdits.data(), Messages.BoardState.class);
-                    updateListener.joined(board);
-              }
-                case CELL_UPDATE -> {
-                    CellUpdate cell = mapper.readValue(recvEdits.data(), Messages.CellUpdate.class);
-                    updateListener.boardUpdate(cell);
-              }
-                default -> updateListener.notifyErrors("Message unknown", null);
-            }
-        } catch (Exception exc) {
-          this.updateListener.notifyErrors("Parsing error board updates", exc);
-        }
+          String msgBody = new String(msg.getBody(), "UTF-8");
+          //maybe here i wanna get some info from msg
+          updateListener.boardUpdate((JsonData) () -> msgBody);
+        } catch (UnsupportedEncodingException ex) {}
       });
       consumeMessages(usersc, msg -> {
         try {
-            Messages.UserInfo usrInfo = mapper.readValue(msg, Messages.UserInfo.class);
-            updateListener.cursorsUpdate(usrInfo);
-        } catch (Exception exc) {
+          String msgBody = new String(msg.getBody(), "UTF-8");
+          updateListener.cursorsUpdate((JsonData) () -> msgBody);
+        } catch (UnsupportedEncodingException exc) {
           this.updateListener.notifyErrors("Parsing error cursor data", exc);
         }
       });
-      jsonBoard.ifPresent(bj -> shareUpdate(new Messages.UserEdit(nickname, Messages.DataType.BOARD_CREATION, bj)));
-    }
-
-    private Boolean queueExists(String queueName) throws TimeoutException {
-      try {
-        var checkChannel = createChannel();
-        if (checkChannel.isPresent()) {
-          checkChannel.get().queueDeclarePassive(queueName);
-          return true;
-        }
-      } catch (IOException ex) {
-        return false;
-      }
-      return false;
     }
 
     private void declareQueue(String name) {
@@ -170,20 +138,19 @@ public class StreamRabbitDistributor implements DataDistributor {
       });
     }
 
-    private void consumeMessages(String queueName, Consumer<String> consume) {
+    private void consumeMessages(String queueName, Consumer<Delivery> consume) {
       Optional<String> tag = Optional.empty();
       if (channel.isPresent()) {
         Channel ch = channel.get();
         boolean autoAck = false;
         try {
-          ch.basicQos(200);
+          ch.basicQos(PREFETCH_COUNT);
           String cTag = ch.basicConsume(
             queueName,
             autoAck,
             Collections.singletonMap("x-stream-offset", "first"),
             (consTag, msg) -> {
-              String msgBody = new String(msg.getBody(), "UTF-8");
-              consume.accept(msgBody);
+              consume.accept(msg);
               long deliveryTag = msg.getEnvelope().getDeliveryTag();
               ch.basicAck(deliveryTag, true);
             },
@@ -220,6 +187,12 @@ public class StreamRabbitDistributor implements DataDistributor {
         }
         this.updateListener.boardLeft(allDisconnected);
       });
+    }
+
+    @Override
+    public JsonData existingBoards() {
+      //TODO: implement that
+      throw new UnsupportedOperationException("Not supported yet.");
     }
   
 }

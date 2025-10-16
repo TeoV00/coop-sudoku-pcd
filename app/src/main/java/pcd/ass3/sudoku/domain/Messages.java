@@ -8,12 +8,8 @@ import pcd.ass3.sudoku.utils.Pos;
 import pcd.ass3.sudoku.utils.PosDeserializer;
 
 public interface Messages {
-  public enum DataType {
-    BOARD_CREATION,
-    CELL_UPDATE
-  };
   public record UserInfo(String nickname, String hexColor, Pos cursorPos){};
-  public record UserEdit(String nickname, DataType type, String data){};
+  public record UserEdit(String nickname, CellUpdate edits){};
   public record CellUpdate (Pos cellPos, Integer cellValue){};
   
   public record BoardState(
