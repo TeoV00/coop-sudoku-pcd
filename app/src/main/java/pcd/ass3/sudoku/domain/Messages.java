@@ -13,7 +13,7 @@ public interface Messages {
     CELL_UPDATE
   };
   public record UserInfo(String nickname, String hexColor, Pos cursorPos){};
-  public record UserEdit(String nickname, DataType type, String jsonData){};
+  public record UserEdit(String nickname, DataType type, String data){};
   public record CellUpdate (Pos cellPos, Integer cellValue){};
   
   public record BoardState(

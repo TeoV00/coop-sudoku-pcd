@@ -3,7 +3,7 @@ package pcd.ass3.sudoku;
 import pcd.ass3.sudoku.domain.Messages;
 
 
-public class ControllerImpl implements UpdateListener {
+public class ControllerImpl implements SharedDataListener {
 
     private final DataDistributor dataDistributor;
 

@@ -26,28 +26,18 @@ public class StreamRabbitDistributor implements DataDistributor {
     boolean notAutoDelete, 
     Map<String,Object> params){};
 
-  private enum UpdateType {
-    BOARD_UPDATE("edits"),
-    USER_UPDATE("user-cursors");
+    private final String BOARD_REGISTRY = "board-registry";
+    private final String BOARD_UPDATE = "edits";
+    private final String USER_UPDATE = "user-cursors";
 
-    private final String name;
-
-    UpdateType(String name) {
-      this.name = name;
-    }
-    public String getDstName() {
-      return name;
-    }
-  }
-
-  private UpdateListener updateListener;
+  private SharedDataListener updateListener;
   private Optional<String> boardName;
   private Optional<Channel> channel;
   private Map<String, Optional<String>> consumerTag;
   private final QueueConfigs configs = new QueueConfigs(true, false, false, Collections.singletonMap("x-queue-type", "stream"));
 
     @Override
-    public void init(UpdateListener controller) {
+    public void init(SharedDataListener controller) {
       this.updateListener = controller;
       this.channel = createChannel();
       this.consumerTag = new HashMap<>();
@@ -67,12 +57,12 @@ public class StreamRabbitDistributor implements DataDistributor {
 
     @Override
     public void shareUpdate(Messages.UserEdit edits) {
-      toJson(edits).ifPresent(json -> publishTo(json, UpdateType.BOARD_UPDATE));
+      toJson(edits).ifPresent(json -> publishTo(json, BOARD_UPDATE));
     }
 
     @Override
     public void updateCursor(Messages.UserInfo userInfo) {
-      toJson(userInfo).ifPresent(json -> publishTo(json, UpdateType.USER_UPDATE));
+      toJson(userInfo).ifPresent(json -> publishTo(json, USER_UPDATE));
     }
 
     private Optional<String> toJson(Object obj) {
@@ -86,11 +76,11 @@ public class StreamRabbitDistributor implements DataDistributor {
       return data;
     }
 
-    private void publishTo(String jsonMsg, UpdateType type) {
+    private void publishTo(String jsonMsg, String queueName) {
       boardName.ifPresent(name -> {
         this.channel.ifPresent(c -> {
           try {
-            c.basicPublish("", queueNameFor(name, type), null, jsonMsg.getBytes("UTF-8"));
+            c.basicPublish("", concat(name, queueName), null, jsonMsg.getBytes("UTF-8"));
           } catch (IOException exc) {
             this.updateListener.notifyErrors("Publish error", exc);
           }
@@ -98,15 +88,15 @@ public class StreamRabbitDistributor implements DataDistributor {
       });
     }
 
-    private String queueNameFor(String name, UpdateType type) {
-      return name.concat("-").concat(type.getDstName());
+    private String concat(String name, String queueName) {
+      return String.join("-", name, queueName);
     }
 
     @Override
     public void joinBoard(String nickname, String boardName, Map<Pos, Integer> initBoard) {
       this.boardName = Optional.of(boardName);
-      String edits = queueNameFor(boardName, UpdateType.BOARD_UPDATE);
-      String usersc = queueNameFor(boardName, UpdateType.USER_UPDATE);
+      String edits = concat(boardName, BOARD_UPDATE);
+      String usersc = concat(boardName, USER_UPDATE);
       Optional<String> jsonBoard = Optional.empty();
       try {
         if (!queueExists(edits)) {
@@ -122,18 +112,18 @@ public class StreamRabbitDistributor implements DataDistributor {
 
       ObjectMapper mapper = new ObjectMapper();
 
-      consumeMessages(edits, msg -> {   
+      consumeMessages(edits, msg -> {
         try {
           Messages.UserEdit recvEdits = mapper.readValue(msg, Messages.UserEdit.class);
           if (null == recvEdits.type()) {
               updateListener.notifyErrors("Message unknown", null);
           } else switch (recvEdits.type()) {
                 case BOARD_CREATION -> {
-                    BoardState board = mapper.readValue(recvEdits.jsonData(), Messages.BoardState.class);
+                    BoardState board = mapper.readValue(recvEdits.data(), Messages.BoardState.class);
                     updateListener.joined(board);
               }
                 case CELL_UPDATE -> {
-                    CellUpdate cell = mapper.readValue(recvEdits.jsonData(), Messages.CellUpdate.class);
+                    CellUpdate cell = mapper.readValue(recvEdits.data(), Messages.CellUpdate.class);
                     updateListener.boardUpdate(cell);
               }
                 default -> updateListener.notifyErrors("Message unknown", null);
