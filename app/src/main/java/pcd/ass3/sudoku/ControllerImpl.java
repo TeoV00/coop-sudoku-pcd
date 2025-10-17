@@ -39,27 +39,10 @@ public class ControllerImpl implements SharedDataListener {
       System.out.println("You have " + (hasLeft ? "sucessfully" : "NOT" ) + " left board");
     }
 
-
-    // try {
-      //   Messages.UserEdit recvEdits = mapper.readValue(msg, Messages.UserEdit.class);
-      //   if (null == recvEdits.type()) {
-      //       updateListener.notifyErrors("Message unknown", null);
-      //   } else switch (recvEdits.type()) {
-      //         case BOARD_CREATION -> {
-      //             BoardState board = mapper.readValue(recvEdits.data(), Messages.BoardState.class);
-      //             updateListener.joined(board);
-      //       }
-      //         case CELL_UPDATE -> {
-      //             CellUpdate cell = mapper.readValue(recvEdits.data(), Messages.CellUpdate.class);
-      //             updateListener.boardUpdate(cell);
-      //       }
-      //         default -> updateListener.notifyErrors("Message unknown", null);
-      //     }
-      // } catch (Exception exc) {
-      //   this.updateListener.notifyErrors("Parsing error board updates", exc);
-      // }
-     
-      //jsonBoard.ifPresent(bj -> shareUpdate(new Messages.UserEdit(nickname, Messages.DataType.BOARD_CREATION, bj)));
+    @Override
+    public void newBoardCreated(DataDistributor.JsonData data) {
+      System.out.println("New board created --> " + data.getJsonString());
+    }
 
       // private Optional<String> toJson(Object obj) {
       //   Optional<String> data = Optional.empty();
@@ -71,9 +54,5 @@ public class ControllerImpl implements SharedDataListener {
       //   }
       //   return data;
       // }
-    @Override
-    public void newBoardCreated(DataDistributor.JsonData data) {
-      throw new UnsupportedOperationException("Not supported yet.");
-    }
 
 }

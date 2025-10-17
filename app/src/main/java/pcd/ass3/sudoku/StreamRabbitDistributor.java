@@ -83,21 +83,6 @@ public class StreamRabbitDistributor implements DataDistributor {
       publishTo(userInfo.getJsonString(), concat(boardName.orElse("unknown"), USER_UPDATE), this.channel);
     }
 
-    private void publishTo(String jsonMsg, String queueName, Optional<Channel> channel) {
-      channel.ifPresent(c -> {
-        try {
-          c.basicPublish("", queueName, null, jsonMsg.getBytes("UTF-8"));
-        } catch (IOException exc) {
-          String errMsg = "Error in publishing on queue" + queueName;
-          this.updateListener.notifyErrors(errMsg , exc);
-        }
-      });
-    }
-
-    private String concat(String name, String queueName) {
-      return String.join("-", name, queueName);
-    }
-
     @Override
     public void joinBoard(String nickname, String boardName) {
       this.boardName = Optional.of(boardName);
@@ -125,6 +110,21 @@ public class StreamRabbitDistributor implements DataDistributor {
           this.updateListener.notifyErrors("Parsing error cursor data", exc);
         }
       });
+    }
+
+    private void publishTo(String jsonMsg, String queueName, Optional<Channel> channel) {
+      channel.ifPresent(c -> {
+        try {
+          c.basicPublish("", queueName, null, jsonMsg.getBytes("UTF-8"));
+        } catch (IOException exc) {
+          String errMsg = "Error in publishing on queue" + queueName;
+          this.updateListener.notifyErrors(errMsg , exc);
+        }
+      });
+    }
+
+    private String concat(String name, String queueName) {
+      return String.join("-", name, queueName);
     }
 
     private void declareQueue(String name, Optional<Channel> channel, QueueConfigs configs) {
