@@ -1,4 +1,4 @@
-package pcd.ass3.sudoku;
+package pcd.ass3.sudoku.mom;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;

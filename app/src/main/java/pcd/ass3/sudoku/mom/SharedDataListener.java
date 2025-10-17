@@ -1,6 +1,6 @@
-package pcd.ass3.sudoku;
+package pcd.ass3.sudoku.mom;
 
-import pcd.ass3.sudoku.DataDistributor.JsonData;
+import pcd.ass3.sudoku.mom.DataDistributor.JsonData;
 
 public interface SharedDataListener {
   public void joined(JsonData board);
