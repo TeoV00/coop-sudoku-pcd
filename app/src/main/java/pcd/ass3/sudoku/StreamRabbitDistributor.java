@@ -2,15 +2,15 @@ package pcd.ass3.sudoku;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Delivery;
@@ -23,7 +23,8 @@ public class StreamRabbitDistributor implements DataDistributor {
     boolean notAutoDelete, 
     Map<String,Object> params){};
 
-  private final String BOARD_REGISTRY = "board-registry";
+  private final String REGISTRY_QUEUE_NAME = "board-registry";
+  private final List<JsonData> boardRegistry = new ArrayList<>();
   private final String BOARD_UPDATE = "edits";
   private final String USER_UPDATE = "user-cursors";
   private static final int PREFETCH_COUNT = 200;
@@ -32,13 +33,26 @@ public class StreamRabbitDistributor implements DataDistributor {
   private Optional<String> boardName;
   private Optional<Channel> channel;
   private Map<String, Optional<String>> consumerTag;
-  private final QueueConfigs configs = new QueueConfigs(true, false, false, Collections.singletonMap("x-queue-type", "stream"));
+  private final QueueConfigs DEFAULT_QUEUE_CONFIG = new QueueConfigs(true, false, false, Collections.singletonMap("x-queue-type", "stream"));
 
     @Override
     public void init(SharedDataListener controller) {
       this.updateListener = controller;
       this.channel = createChannel();
       this.consumerTag = new HashMap<>();
+      initBoardRegistry();
+    }
+
+    private void initBoardRegistry() {
+      Optional<Channel> regChannel = createChannel();
+      declareQueue(REGISTRY_QUEUE_NAME, regChannel, DEFAULT_QUEUE_CONFIG);
+      consumeMessages(REGISTRY_QUEUE_NAME, this.channel, msg -> {
+        try {
+          String msgBody = new String(msg.getBody(), "UTF-8");
+          boardRegistry.add((JsonData) () -> msgBody);
+          updateListener.newBoardCreated((JsonData) () -> msgBody);
+        } catch (UnsupportedEncodingException ex) {}
+      });
     }
 
     private Optional<Channel> createChannel()  {
@@ -55,23 +69,12 @@ public class StreamRabbitDistributor implements DataDistributor {
 
     @Override
     public void shareUpdate(JsonData edits) {
-      publishTo(edits.getJsoString(), BOARD_UPDATE);
+      publishTo(edits.getJsonString(), BOARD_UPDATE);
     }
 
     @Override
     public void updateCursor(JsonData userInfo) {
-      publishTo(userInfo.getJsoString(), USER_UPDATE);
-    }
-
-    private Optional<String> toJson(Object obj) {
-      Optional<String> data = Optional.empty();
-      ObjectMapper mapper = new ObjectMapper();
-      try {
-        data = Optional.ofNullable(mapper.writeValueAsString(obj));
-      } catch (JsonProcessingException exc) {
-        this.updateListener.notifyErrors("Json parsing error", exc);
-      }
-      return data;
+      publishTo(userInfo.getJsonString(), USER_UPDATE);
     }
 
     private void publishTo(String jsonMsg, String queueName) {
@@ -95,26 +98,21 @@ public class StreamRabbitDistributor implements DataDistributor {
       this.boardName = Optional.of(boardName);
       String edits = concat(boardName, BOARD_UPDATE);
       String usersc = concat(boardName, USER_UPDATE);
-      // Optional<String> jsonBoard = Optional.empty();
-      // try {
-      //   if (!queueExists(edits)) {
-      //     BoardState board = new Messages.BoardState(initBoard);
-      //     jsonBoard = toJson(board);
-      //   }
-      // } catch (TimeoutException exc) {
-      //   this.updateListener.notifyErrors("Join board error", exc);
-      // }
 
-      declareQueue(edits);
-      declareQueue(usersc);
-      consumeMessages(edits, msg -> {
+      Map<String, Object> args = new HashMap<>();
+      args.put("x-queue-type", "stream");
+      args.put("x-message-ttl", 30000);
+      declareQueue(usersc, this.channel, new QueueConfigs(true, false, false, args));
+      declareQueue(edits, this.channel, DEFAULT_QUEUE_CONFIG);
+
+      consumeMessages(edits, this.channel, msg -> {
         try {
           String msgBody = new String(msg.getBody(), "UTF-8");
           //maybe here i wanna get some info from msg
           updateListener.boardUpdate((JsonData) () -> msgBody);
         } catch (UnsupportedEncodingException ex) {}
       });
-      consumeMessages(usersc, msg -> {
+      consumeMessages(usersc, this.channel, msg -> {
         try {
           String msgBody = new String(msg.getBody(), "UTF-8");
           updateListener.cursorsUpdate((JsonData) () -> msgBody);
@@ -124,7 +122,7 @@ public class StreamRabbitDistributor implements DataDistributor {
       });
     }
 
-    private void declareQueue(String name) {
+    private void declareQueue(String name, Optional<Channel> channel, QueueConfigs configs) {
       channel.ifPresent((ch) -> {
         try {
           ch.queueDeclare(name,
@@ -138,7 +136,7 @@ public class StreamRabbitDistributor implements DataDistributor {
       });
     }
 
-    private void consumeMessages(String queueName, Consumer<Delivery> consume) {
+    private void consumeMessages(String queueName, Optional<Channel> channel, Consumer<Delivery> consume) {
       Optional<String> tag = Optional.empty();
       if (channel.isPresent()) {
         Channel ch = channel.get();
@@ -190,9 +188,8 @@ public class StreamRabbitDistributor implements DataDistributor {
     }
 
     @Override
-    public JsonData existingBoards() {
-      //TODO: implement that
-      throw new UnsupportedOperationException("Not supported yet.");
+    public List<JsonData> existingBoards() {
+      return List.copyOf(boardRegistry);
     }
   
 }

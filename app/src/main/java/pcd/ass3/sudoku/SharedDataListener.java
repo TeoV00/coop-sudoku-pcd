@@ -8,4 +8,5 @@ public interface SharedDataListener {
   public void cursorsUpdate(JsonData cursor);
   public void notifyErrors(String errMsg, Exception exc);
   public void boardLeft(Boolean hasLeft);
+  public void newBoardCreated(JsonData data);
 }

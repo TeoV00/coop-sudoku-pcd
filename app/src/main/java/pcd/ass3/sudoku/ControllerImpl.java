@@ -16,17 +16,17 @@ public class ControllerImpl implements SharedDataListener {
     @Override
     public void joined(DataDistributor.JsonData board) {
       System.out.println("joined!!");
-      System.out.println(board.getJsoString());
+      System.out.println(board.getJsonString());
     }
 
     @Override
     public void boardUpdate(DataDistributor.JsonData edits) {
-        System.out.println(edits.getJsoString());
+        System.out.println(edits.getJsonString());
     }
 
     @Override
     public void cursorsUpdate(DataDistributor.JsonData cursor) {
-        System.out.println(cursor.getJsoString());
+        System.out.println(cursor.getJsonString());
     }
 
     @Override
@@ -60,5 +60,20 @@ public class ControllerImpl implements SharedDataListener {
       // }
      
       //jsonBoard.ifPresent(bj -> shareUpdate(new Messages.UserEdit(nickname, Messages.DataType.BOARD_CREATION, bj)));
+
+      // private Optional<String> toJson(Object obj) {
+      //   Optional<String> data = Optional.empty();
+      //   ObjectMapper mapper = new ObjectMapper();
+      //   try {
+      //     data = Optional.ofNullable(mapper.writeValueAsString(obj));
+      //   } catch (JsonProcessingException exc) {
+      //     this.updateListener.notifyErrors("Json parsing error", exc);
+      //   }
+      //   return data;
+      // }
+    @Override
+    public void newBoardCreated(DataDistributor.JsonData data) {
+      throw new UnsupportedOperationException("Not supported yet.");
+    }
 
 }
