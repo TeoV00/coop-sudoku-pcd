@@ -44,18 +44,18 @@ class SharedDataListener {
 title: Alternative type instead String as parameter in DataDistributor methods
 ---
 classDiagram
-class Data {
+class JsonData {
   <<interface>>
-  + getJsonData() String
+  + getJsonString() String
 }
 ```
 
 # Note-Appunti
    
 ## RabbitDataDistributor  
-* Tutti i metodi prendono in input una stringa json del Messaggio da inviare —> quindi è chi chiama il metodo che deve preparare i dati e convertirli in json  
-* Gli handler dei messaggi ricevuti vengono definiti fuori ( da messaggio json string poi fuori questa classe uni si arrangia a convertire e gestire i dati)  
-* Aggiungere metodo alla api così da sapere se esiste una coda o no (aggiungere una nuova coda stream che contiene tutte le board create con lo stato iniziale)  
+- [X] Tutti i metodi prendono in input una ~~stringa~~ `JsonData` json del Messaggio da inviare —> quindi è chi chiama il metodo che deve preparare i dati e convertirli in json  
+- [X] Gli handler dei messaggi ricevuti vengono definiti fuori ( da messaggio json string poi fuori questa classe uni si arrangia a convertire e gestire i dati)  
+- [ ] Aggiungere metodo alla api così da sapere se esiste una coda o no (aggiungere una nuova coda stream che contiene tutte le board create con lo stato iniziale)  
   
   
 1. Chiedi se esiste già la board  
