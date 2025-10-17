@@ -1,5 +1,6 @@
 package pcd.ass3.sudoku;
 
+import pcd.ass3.sudoku.controller.ControllerImpl;
 import pcd.ass3.sudoku.mom.DataDistributor.JsonData;
 import pcd.ass3.sudoku.mom.SharedDataListener;
 import pcd.ass3.sudoku.mom.StreamRabbitDistributor;

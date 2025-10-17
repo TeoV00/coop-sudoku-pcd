@@ -1,8 +1,7 @@
-package pcd.ass3.sudoku;
+package pcd.ass3.sudoku.controller;
 
 import pcd.ass3.sudoku.mom.DataDistributor;
 import pcd.ass3.sudoku.mom.SharedDataListener;
-
 
 public class ControllerImpl implements SharedDataListener {
 

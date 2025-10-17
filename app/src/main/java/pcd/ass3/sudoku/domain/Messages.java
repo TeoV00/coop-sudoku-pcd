@@ -12,8 +12,9 @@ public interface Messages {
   public record UserEdit(String nickname, CellUpdate edits){};
   public record CellUpdate (Pos cellPos, Integer cellValue){};
   
-  public record BoardState(
+  public record BoardInfo(
     @JsonDeserialize(keyUsing = PosDeserializer.PosKeyDeserializer.class)
-    Map<Pos, Integer> board
+    Map<Pos, Integer> board,
+    String createdBy
   ){};
 }
