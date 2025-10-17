@@ -10,6 +10,7 @@ public interface DataDistributor {
   }
 
   void init(SharedDataListener controller);
+  void registerBoard(JsonData boarData);
   void joinBoard(String nickname, String boardName);
   void leaveBoard();
   void shareUpdate(JsonData edits);

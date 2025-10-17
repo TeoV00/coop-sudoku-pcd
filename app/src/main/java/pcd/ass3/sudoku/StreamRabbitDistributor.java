@@ -32,6 +32,7 @@ public class StreamRabbitDistributor implements DataDistributor {
   private SharedDataListener updateListener;
   private Optional<String> boardName;
   private Optional<Channel> channel;
+   private Optional<Channel> registryChannel;
   private Map<String, Optional<String>> consumerTag;
   private final QueueConfigs DEFAULT_QUEUE_CONFIG = new QueueConfigs(true, false, false, Collections.singletonMap("x-queue-type", "stream"));
 
@@ -44,8 +45,8 @@ public class StreamRabbitDistributor implements DataDistributor {
     }
 
     private void initBoardRegistry() {
-      Optional<Channel> regChannel = createChannel();
-      declareQueue(REGISTRY_QUEUE_NAME, regChannel, DEFAULT_QUEUE_CONFIG);
+      this.registryChannel = createChannel();
+      declareQueue(REGISTRY_QUEUE_NAME, this.registryChannel, DEFAULT_QUEUE_CONFIG);
       consumeMessages(REGISTRY_QUEUE_NAME, this.channel, msg -> {
         try {
           String msgBody = new String(msg.getBody(), "UTF-8");
@@ -53,6 +54,11 @@ public class StreamRabbitDistributor implements DataDistributor {
           updateListener.newBoardCreated((JsonData) () -> msgBody);
         } catch (UnsupportedEncodingException ex) {}
       });
+    }
+
+    @Override
+    public void registerBoard(JsonData data) {
+      publishTo(data.getJsonString(), REGISTRY_QUEUE_NAME, this.registryChannel);
     }
 
     private Optional<Channel> createChannel()  {
@@ -69,23 +75,22 @@ public class StreamRabbitDistributor implements DataDistributor {
 
     @Override
     public void shareUpdate(JsonData edits) {
-      publishTo(edits.getJsonString(), BOARD_UPDATE);
+      publishTo(edits.getJsonString(), concat(boardName.orElse("unknown"), BOARD_UPDATE), this.channel);
     }
 
     @Override
     public void updateCursor(JsonData userInfo) {
-      publishTo(userInfo.getJsonString(), USER_UPDATE);
+      publishTo(userInfo.getJsonString(), concat(boardName.orElse("unknown"), USER_UPDATE), this.channel);
     }
 
-    private void publishTo(String jsonMsg, String queueName) {
-      boardName.ifPresent(name -> {
-        this.channel.ifPresent(c -> {
-          try {
-            c.basicPublish("", concat(name, queueName), null, jsonMsg.getBytes("UTF-8"));
-          } catch (IOException exc) {
-            this.updateListener.notifyErrors("Publish error", exc);
-          }
-        });
+    private void publishTo(String jsonMsg, String queueName, Optional<Channel> channel) {
+      channel.ifPresent(c -> {
+        try {
+          c.basicPublish("", queueName, null, jsonMsg.getBytes("UTF-8"));
+        } catch (IOException exc) {
+          String errMsg = "Error in publishing on queue" + queueName;
+          this.updateListener.notifyErrors(errMsg , exc);
+        }
       });
     }
 
