@@ -1,19 +1,16 @@
-package pcd.ass3.sudoku.domain;
+package pcd.ass3.sudoku;
 
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
 import pcd.ass3.sudoku.utils.Pos;
-import pcd.ass3.sudoku.utils.PosDeserializer;
 
-public interface Messages {
+public interface Domain {
   public record UserInfo(String nickname, String hexColor, Pos cursorPos){};
+  
   public record UserEdit(String nickname, CellUpdate edits){};
   public record CellUpdate (Pos cellPos, Integer cellValue){};
   
   public record BoardInfo(
-    @JsonDeserialize(keyUsing = PosDeserializer.PosKeyDeserializer.class)
     Map<Pos, Integer> board,
     String createdBy
   ){};

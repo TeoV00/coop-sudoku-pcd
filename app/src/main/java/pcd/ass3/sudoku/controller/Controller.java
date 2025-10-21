@@ -2,7 +2,7 @@ package pcd.ass3.sudoku.controller;
 
 import java.util.List;
 
-import pcd.ass3.sudoku.domain.Messages.BoardInfo;
+import pcd.ass3.sudoku.Domain.BoardInfo;
 import pcd.ass3.sudoku.utils.Pos;
 
 public interface Controller {
