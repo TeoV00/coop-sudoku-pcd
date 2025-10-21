@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -15,12 +16,13 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 import pcd.ass3.sudoku.Domain;
 import pcd.ass3.sudoku.controller.Controller;
 
-public class SudokuBoardUI extends JFrame implements UpdateObserver{
+public class SudokuBoardUI extends JFrame implements UpdateObserver {
     
     private DefaultListModel<String> boardListModel;
     private Controller controller;
@@ -38,7 +40,8 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver{
         JPanel sidebarPanel = createSidebarPanel();
         add(sidebarPanel, BorderLayout.WEST);
         
-        JPanel centerPanel = new BoardPanel("jj", 6, new Color(173, 216, 230));
+        // TODO: if any board has joined dotn show anything
+        JPanel centerPanel = new BoardPanel(controller, "jj", 6, new Color(173, 216, 230));
         add(centerPanel, BorderLayout.CENTER);
         
         setVisible(true);
@@ -107,7 +110,7 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver{
     private void addNewBoard() {
         String boardName = JOptionPane.showInputDialog(this, "Enter new board name:");
         if (boardName != null && !boardName.trim().isEmpty()) {
-            boardListModel.addElement(boardName.toUpperCase());
+            controller.createNewBoard(boardName, 6);
         }
     }
     
@@ -143,14 +146,14 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver{
 
     @Override
     public void boardLeft(Boolean hasLeft) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        // TODO: clear board panel grid
     }
 
     @Override
     public void newBoardCreated(Domain.BoardInfo data) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        String itemName = String.join("-", List.of(data.name(), data.createdBy()));
+        SwingUtilities.invokeLater(() -> boardListModel.addElement(itemName));
     }
     
-   
 }
 

@@ -12,6 +12,7 @@ public interface Domain {
   
   public record BoardInfo(
     Map<Pos, Integer> board,
-    String createdBy
+    String createdBy,
+    String name
   ){};
 }
