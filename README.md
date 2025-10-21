@@ -33,6 +33,16 @@ class SharedDataListener {
   + newBoardCreated(String jsonBoardInfo) void
 }
 
+class Controller {
+  <<interface>>
+  + setCellValue(Pos cellPos, int value)
+  + getPublishedBoards() List~BoardInfo~
+  + createNewBoard(String name, int size)
+  + selectCell(Pos cellPos)
+  + leaveBoard()
+  + joinToBoard(String boardName)
+}
+
 ```
 ---
 
