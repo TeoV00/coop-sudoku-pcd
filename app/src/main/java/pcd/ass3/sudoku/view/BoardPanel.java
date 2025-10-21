@@ -20,17 +20,23 @@ import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 
+import pcd.ass3.sudoku.controller.Controller;
+import pcd.ass3.sudoku.utils.Pair;
+import pcd.ass3.sudoku.utils.Pos;
+
 
 public final class BoardPanel extends JPanel implements UserCellsObserver {
 
     private JPanel gridPanel;
     private JButton[][] cells;
-    private JButton selectedCell = null;
+    private Pair<Pos, JButton> selectedCell = null;
     private Color selectedCellColor;
-    private Map<String, Color> usersCursor;
+    private Map<String, Color> usersCursors;
+    private Controller controller;
 
-    public BoardPanel(String boardName, int size, Color usrColor) {
-        this.usersCursor = new HashMap();
+    public BoardPanel(Controller controller, String boardName, int size, Color usrColor) {
+        this.controller = controller;
+        this.usersCursors = new HashMap();
         this.selectedCellColor = usrColor;
         setLayout(new BorderLayout());
         this.setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -122,11 +128,12 @@ public final class BoardPanel extends JPanel implements UserCellsObserver {
     private void selectCell(int row, int col) {
         // Ripristina il colore della cella precedentemente selezionata
         if (selectedCell != null) {
-            selectedCell.setBorder(makeBorder(row, col));
+            selectedCell.y().setBorder(makeBorder(row, col));
         }
-        selectedCell = cells[row][col];
-        selectedCell.setBackground(Color.BLACK);
-        selectedCell.setBorder(BorderFactory.createMatteBorder(3, 3, 3, 3, selectedCellColor));
+        selectedCell = new Pair(new Pos(row, col),cells[row][col]);
+        controller.selectCell(new Pos(row, col));
+        selectedCell.y().setBackground(Color.BLACK);
+        selectedCell.y().setBorder(BorderFactory.createMatteBorder(3, 3, 3, 3, selectedCellColor));
     }
 
     private JPanel createNumberPanel() {
@@ -164,7 +171,8 @@ public final class BoardPanel extends JPanel implements UserCellsObserver {
     
     private void insertNumber(int number) {
         if (selectedCell != null) {
-            selectedCell.setText(String.valueOf(number));
+            selectedCell.y().setText(String.valueOf(number));
+            controller.setCellValue(selectedCell.x(), number);
         } else {
             JOptionPane.showMessageDialog(this, "Seleziona prima una cella!");
         }
@@ -172,7 +180,7 @@ public final class BoardPanel extends JPanel implements UserCellsObserver {
     
     private void clearSelectedCell() {
         if (selectedCell != null) {
-            selectedCell.setText("");
+            selectedCell.y().setText("");
         } else {
             JOptionPane.showMessageDialog(this, "Seleziona prima una cella!");
         }
@@ -180,7 +188,7 @@ public final class BoardPanel extends JPanel implements UserCellsObserver {
     
     @Override
     public void updatedUsersCursor(String username, String color) {
-        usersCursor.put(username, Color.decode(color));
+        usersCursors.put(username, Color.decode(color));
     }
     
 
