@@ -18,6 +18,7 @@ public class CooperativeSudoku {
         distr.updateCursor((JsonData)() -> 
             "{\"username\": \"pippo\",\"color\": \"ff645d\",\"pos\": {\"x\": 20, \"y\": 20}}");
         var gui = new SudokuBoardUI(controller);
+        controller.setObserver(gui);
         javax.swing.SwingUtilities.invokeLater(() -> gui.setVisible(true));
         
     }

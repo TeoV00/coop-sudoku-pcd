@@ -4,8 +4,11 @@ import java.util.List;
 
 import pcd.ass3.sudoku.Domain.BoardInfo;
 import pcd.ass3.sudoku.utils.Pos;
+import pcd.ass3.sudoku.view.UpdateObserver;
 
 public interface Controller {
+
+  void setObserver(UpdateObserver obseeveObserver);
 
   /**
    * Sets the value of a sudoku cell.
