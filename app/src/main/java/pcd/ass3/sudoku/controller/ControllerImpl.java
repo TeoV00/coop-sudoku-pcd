@@ -2,6 +2,7 @@ package pcd.ass3.sudoku.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import pcd.ass3.sudoku.Domain;
 import pcd.ass3.sudoku.mom.DataDistributor;
@@ -48,8 +49,11 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public void notifyErrors(String errMsg, Exception exc) {
-      System.out.println(errMsg + " --> " + exc.getMessage());
-      observer.notifyErrors(errMsg, exc);
+      Optional<String> descr = Optional.empty();
+      if (exc != null) {
+        descr = Optional.ofNullable(exc.getMessage());
+      }
+      observer.notifyErrors(errMsg, descr);
     }
 
     @Override
@@ -78,7 +82,11 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public void setCellValue(Pos cellPos, int value) {
-        throw new UnsupportedOperationException("Not supported yet.");
+      // TODO: Replace with actual JsonData creation logic
+      DataDistributor.JsonData jsonData = () -> {
+          return "";
+      };
+      this.dataDistributor.shareUpdate(jsonData);
     }
 
     @Override
@@ -90,22 +98,36 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public void createNewBoard(String name, int size) {
-        throw new UnsupportedOperationException("Not supported yet.");
+      // TODO: Replace with actual JsonData creation logic
+      DataDistributor.JsonData jsonData = () -> {
+          return "";
+      };
+      //TODO before registering check if a board with same name exists
+      this.dataDistributor.registerBoard(jsonData);
     }
 
     @Override
     public void selectCell(Pos cellPos) {
-        throw new UnsupportedOperationException("Not supported yet.");
+      // TODO: Replace with actual JsonData creation logic
+      DataDistributor.JsonData jsonData = () -> {
+          return "";
+      };
+      this.dataDistributor.updateCursor(jsonData);
     }
 
     @Override
     public void leaveBoard() {
-        throw new UnsupportedOperationException("Not supported yet.");
+      this.dataDistributor.unsubscribe();
     }
 
     @Override
     public void joinToBoard(String boardName) {
-        throw new UnsupportedOperationException("Not supported yet.");
+      // TODO: Replace with actual JsonData creation logic
+      DataDistributor.JsonData jsonData = () -> {
+          return "";
+      };
+      var usrName = "yee";
+      this.dataDistributor.subscribe(usrName, boardName);
     }
 
     @Override

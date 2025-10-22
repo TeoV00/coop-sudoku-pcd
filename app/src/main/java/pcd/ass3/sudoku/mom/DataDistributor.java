@@ -11,8 +11,8 @@ public interface DataDistributor {
 
   void init(SharedDataListener controller);
   void registerBoard(JsonData boarData);
-  void joinBoard(String nickname, String boardName);
-  void leaveBoard();
+  void subscribe(String nickname, String boardName);
+  void unsubscribe();
   void shareUpdate(JsonData edits);
   void updateCursor(JsonData userInfo);
   List<JsonData> existingBoards();

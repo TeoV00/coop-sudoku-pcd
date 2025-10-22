@@ -21,7 +21,8 @@ public class StreamRabbitDistributor implements DataDistributor {
     boolean durable, 
     boolean notExclusive, 
     boolean notAutoDelete, 
-    Map<String,Object> params){};
+    Map<String,Object> params
+  ){};
 
   private final String REGISTRY_QUEUE_NAME = "board-registry";
   private final List<JsonData> boardRegistry = new ArrayList<>();
@@ -84,7 +85,7 @@ public class StreamRabbitDistributor implements DataDistributor {
     }
 
     @Override
-    public void joinBoard(String nickname, String boardName) {
+    public void subscribe(String nickname, String boardName) {
       this.boardName = Optional.of(boardName);
       String edits = concat(boardName, BOARD_UPDATE);
       String usersc = concat(boardName, USER_UPDATE);
@@ -170,7 +171,7 @@ public class StreamRabbitDistributor implements DataDistributor {
     }
 
     @Override
-    public void leaveBoard() {
+    public void unsubscribe() {
       this.channel.ifPresent(ch -> {
         this.consumerTag.entrySet().forEach(e -> {
           String queueName = e.getKey();

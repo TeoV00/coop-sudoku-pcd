@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.util.List;
+import java.util.Optional;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -25,7 +26,7 @@ import pcd.ass3.sudoku.controller.Controller;
 public class SudokuBoardUI extends JFrame implements UpdateObserver {
     
     private DefaultListModel<String> boardListModel;
-    private Controller controller;
+    private final Controller controller;
     private JList<String> boardList;
     private ErrorsListener errorsListener;
 
@@ -140,8 +141,8 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
     }
 
     @Override
-    public void notifyErrors(String errMsg, Exception exc) {
-        this.errorsListener.newError(errMsg, exc.getCause().getMessage());
+    public void notifyErrors(String errMsg, Optional<String> description) {
+        this.errorsListener.newError(errMsg, description.orElse(""));
     }
 
     @Override
