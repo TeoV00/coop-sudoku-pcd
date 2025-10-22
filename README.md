@@ -6,6 +6,51 @@
 
 classDiagram
 
+SharedDataListener <|.. Controller
+Controller "1" *-- DataDistributor
+GUI "1" *-- Controller
+DataDistributor "1" *-- SharedDataListener
+Controller "1" *-- UpdateObserver
+
+UpdateObserver <|.. GUI
+
+
+namespace controller {
+  class Controller {
+    <<interface>>
+  }
+}
+
+namespace mom {
+  class DataDistributor {
+    <<interface>>
+  }
+  class SharedDataListener {
+    <<interface>>
+  }
+
+}
+
+namespace view {
+  class GUI
+  class UpdateObserver {
+    <<interface>>
+  }
+}
+```
+
+<!-- ``` mermaid
+zenuml
+  A.method() {
+    B.nested_sync_method()
+    B->C: nested async message
+  }
+``` -->
+<!-- 
+``` mermaid
+
+classDiagram
+
 DataDistributor "1" *-- SharedDataListener
 DataDistributor <|.. StreamRabbitDataDistributor
 SharedDataListener <|.. Controller
@@ -43,7 +88,7 @@ class Controller {
   + joinToBoard(String boardName)
 }
 
-```
+``` -->
 ---
 
 **NOTE** Instead `String` type for jsonData i could create a wrapper or interface like:
