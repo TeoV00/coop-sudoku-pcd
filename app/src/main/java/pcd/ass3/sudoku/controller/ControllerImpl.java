@@ -53,7 +53,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
       if (exc != null) {
         descr = Optional.ofNullable(exc.getMessage());
       }
-      observer.notifyErrors(errMsg, descr);
+      observer.notifyError(errMsg, descr);
     }
 
     @Override

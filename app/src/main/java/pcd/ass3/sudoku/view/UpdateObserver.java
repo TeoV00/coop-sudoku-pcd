@@ -1,16 +1,13 @@
 package pcd.ass3.sudoku.view;
 
-import java.util.Optional;
-
 import pcd.ass3.sudoku.Domain.BoardInfo;
 import pcd.ass3.sudoku.Domain.CellUpdate;
 import pcd.ass3.sudoku.Domain.UserInfo;
 
-public interface UpdateObserver {
+public interface UpdateObserver extends ErrorListener {
   public void joined(int[][] board);
   public void cellUpdate(CellUpdate edits);
   public void cursorsUpdate(UserInfo cursor);
-  public void notifyErrors(String errMsg, Optional<String> description);
   public void boardLeft(Boolean hasLeft);
   public void newBoardCreated(BoardInfo data);
 }

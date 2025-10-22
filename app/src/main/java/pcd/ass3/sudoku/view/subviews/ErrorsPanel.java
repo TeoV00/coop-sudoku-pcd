@@ -1,9 +1,10 @@
-package pcd.ass3.sudoku.view;
+package pcd.ass3.sudoku.view.subviews;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.util.Optional;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -14,7 +15,9 @@ import javax.swing.JScrollPane;
 import javax.swing.ListModel;
 import javax.swing.border.EmptyBorder;
 
-class ErrorsPanel extends JPanel implements ErrorsListener {
+import pcd.ass3.sudoku.view.ErrorListener;
+
+public class ErrorsPanel extends JPanel implements ErrorListener {
 
     private ListModel listModel = new DefaultListModel<>();
     private final JList errorList;
@@ -39,7 +42,7 @@ class ErrorsPanel extends JPanel implements ErrorsListener {
     }
 
     @Override
-    public void newError(String error, String description) {
+    public void notifyError(String error, Optional<String> description) {
         ((DefaultListModel<String>) listModel).addElement(error + ": " + description);
         errorList.setModel(listModel);
         errorList.repaint();

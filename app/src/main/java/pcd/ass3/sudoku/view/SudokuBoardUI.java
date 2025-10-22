@@ -4,8 +4,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -22,15 +24,19 @@ import javax.swing.border.EmptyBorder;
 
 import pcd.ass3.sudoku.Domain;
 import pcd.ass3.sudoku.controller.Controller;
+import pcd.ass3.sudoku.view.subviews.BoardPanel;
+import pcd.ass3.sudoku.view.subviews.ErrorsPanel;
 
 public class SudokuBoardUI extends JFrame implements UpdateObserver {
     
     private DefaultListModel<String> boardListModel;
     private final Controller controller;
     private JList<String> boardList;
-    private ErrorsListener errorsListener;
+    private ErrorListener errorsListener;
+    private final List<UpdateObserver> subViews;
 
     public SudokuBoardUI(Controller controller) {
+        this.subViews = new ArrayList<>();
         this.controller = controller;
         setTitle("Sudoku Boards");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -42,10 +48,15 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         add(sidebarPanel, BorderLayout.WEST);
         
         // TODO: if any board has joined dotn show anything
+        // FIX: here "jj" and color should be set after
         JPanel centerPanel = new BoardPanel(controller, "jj", 6, new Color(173, 216, 230));
         add(centerPanel, BorderLayout.CENTER);
-        
+    
         setVisible(true);
+    }
+
+    private void updateSubViews(Consumer<UpdateObserver> fun) {
+        this.subViews.forEach(view -> fun.accept(view));
     }
     
     private JPanel createSidebarPanel() {
@@ -125,29 +136,43 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         }
     }
 
+    /**
+     * The below method are part of interface UpdateObserver.
+     * Receives updates from Controller
+     */
     @Override
     public void joined(int[][] board) {
-        //update board panel
+        //todo update here this view
+        updateSubViews(v -> {
+            v.joined(board);
+        });
     }
 
     @Override
     public void cellUpdate(Domain.CellUpdate edits) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        updateSubViews(v -> {
+            v.cellUpdate(edits);
+        });
     }
 
     @Override
     public void cursorsUpdate(Domain.UserInfo cursor) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        updateSubViews(v -> {
+            v.cursorsUpdate(cursor);
+        });
     }
 
     @Override
-    public void notifyErrors(String errMsg, Optional<String> description) {
-        this.errorsListener.newError(errMsg, description.orElse(""));
+    public void notifyError(String errMsg, Optional<String> description) {
+        this.errorsListener.notifyError(errMsg, description);
     }
 
     @Override
     public void boardLeft(Boolean hasLeft) {
         // TODO: clear board panel grid
+        updateSubViews(v -> {
+            v.boardLeft(hasLeft);
+        });
     }
 
     @Override

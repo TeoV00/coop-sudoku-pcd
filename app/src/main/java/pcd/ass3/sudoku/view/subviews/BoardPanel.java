@@ -1,4 +1,4 @@
-package pcd.ass3.sudoku.view;
+package pcd.ass3.sudoku.view.subviews;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -10,6 +10,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -20,19 +21,21 @@ import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 
+import pcd.ass3.sudoku.Domain;
 import pcd.ass3.sudoku.controller.Controller;
 import pcd.ass3.sudoku.utils.Pair;
 import pcd.ass3.sudoku.utils.Pos;
+import pcd.ass3.sudoku.view.UpdateObserver;
 
 
-public final class BoardPanel extends JPanel implements UserCellsObserver {
+public final class BoardPanel extends JPanel implements UpdateObserver {
 
-    private JPanel gridPanel;
-    private JButton[][] cells;
+    private final JPanel gridPanel;
+    private final JButton[][] cells;
     private Pair<Pos, JButton> selectedCell = null;
-    private Color selectedCellColor;
-    private Map<String, Color> usersCursors;
-    private Controller controller;
+    private final Color selectedCellColor;
+    private final Map<String, Color> usersCursors;
+    private final Controller controller;
 
     public BoardPanel(Controller controller, String boardName, int size, Color usrColor) {
         this.controller = controller;
@@ -185,10 +188,35 @@ public final class BoardPanel extends JPanel implements UserCellsObserver {
             JOptionPane.showMessageDialog(this, "Seleziona prima una cella!");
         }
     }
-    
+
     @Override
-    public void updatedUsersCursor(String username, String color) {
-        usersCursors.put(username, Color.decode(color));
+    public void joined(int[][] board) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void cellUpdate(Domain.CellUpdate edits) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void cursorsUpdate(Domain.UserInfo cursor) {
+        usersCursors.put(cursor.nickname(), Color.decode(cursor.hexColor()));
+    }
+
+    @Override
+    public void boardLeft(Boolean hasLeft) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void newBoardCreated(Domain.BoardInfo data) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void notifyError(String errMsg, Optional<String> description) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
     
 

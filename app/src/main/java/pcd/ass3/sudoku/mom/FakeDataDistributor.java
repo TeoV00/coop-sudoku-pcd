@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class FakeDataDistributor implements DataDistributor {
 
-  private List<Map<String, String>> boards;
+  private final List<Map<String, String>> boards;
   private SharedDataListener dataListener;
 
   public FakeDataDistributor() {

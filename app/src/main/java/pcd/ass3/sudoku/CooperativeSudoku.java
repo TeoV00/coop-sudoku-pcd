@@ -17,9 +17,5 @@ public class CooperativeSudoku {
         javax.swing.SwingUtilities.invokeLater(() -> gui.setVisible(true));
 
         distr.init(listener);
-        // //distr.subscribe("pippo", "board1");
-        // distr.updateCursor((JsonData)() -> 
-        //     "{\"username\": \"pippo\",\"color\": \"ff645d\",\"pos\": {\"x\": 20, \"y\": 20}}");
-        
     }
 }
