@@ -14,9 +14,11 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     private final DataDistributor dataDistributor;
     private UpdateObserver observer;
+    private Optional<String> boardName;
 
     public ControllerImpl(DataDistributor dataDistributor) {
       this.dataDistributor = dataDistributor;
+      this.boardName = Optional.empty();
     }
 
     public void initDataSharing(){
@@ -24,13 +26,14 @@ public class ControllerImpl implements Controller, SharedDataListener {
     };
 
     @Override
-    public void joined(DataDistributor.JsonData boardData) {
-      System.out.println("joined!!");
-      System.out.println(boardData.getJsonString());
-      int[][] board = null;
+    public void joined() {
+      var boardsJson = this.dataDistributor.existingBoards();
+      //TODO: parse JsonData of registered boards the get the one with required boardName
       //TODO here update view providing just initial board cells
       // other cells are updated by method boardUpdate()
-      observer.joined(board);
+      // filter by this.boardName
+      var fakeInfo = new Domain.BoardInfo(Map.of(), "createdBy", "name");
+      observer.joined(fakeInfo);
     }
 
     @Override
@@ -58,15 +61,16 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public void boardLeft(Boolean hasLeft) {
-      System.out.println("You have " + (hasLeft ? "sucessfully" : "NOT" ) + " left board");
+      this.boardName = hasLeft ? Optional.empty() : boardName;
       observer.boardLeft(hasLeft);
     }
 
     @Override
     public void newBoardCreated(DataDistributor.JsonData data) {
-      System.out.println("New board created --> " + data.getJsonString());
+      observer.notifyError("New board created --> " + data.getJsonString(), Optional.empty());
       //TODO: extract info of board in order to be shows as available board you can join
-      observer.newBoardCreated(null);
+      var boardData = new Domain.BoardInfo(Map.of(), "createdBy", data.getJsonString());
+      observer.newBoardCreated(boardData.name());
     }
 
       // private Optional<String> toJson(Object obj) {
@@ -80,6 +84,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
       //   return data;
       // }
 
+    /** Below there are method of requests from user */
     @Override
     public void setCellValue(Pos cellPos, int value) {
       // TODO: Replace with actual JsonData creation logic
@@ -100,7 +105,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
     public void createNewBoard(String name, int size) {
       // TODO: Replace with actual JsonData creation logic
       DataDistributor.JsonData jsonData = () -> {
-          return "";
+          return name;
       };
       //TODO before registering check if a board with same name exists
       this.dataDistributor.registerBoard(jsonData);
@@ -122,12 +127,8 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public void joinToBoard(String boardName) {
-      // TODO: Replace with actual JsonData creation logic
-      DataDistributor.JsonData jsonData = () -> {
-          return "";
-      };
-      var usrName = "yee";
-      this.dataDistributor.subscribe(usrName, boardName);
+      this.boardName = Optional.of(boardName);
+      this.dataDistributor.subscribe(boardName);
     }
 
     @Override

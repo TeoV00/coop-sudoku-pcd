@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
+import com.rabbitmq.client.AMQP.Queue.DeclareOk;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Delivery;
@@ -35,7 +36,7 @@ public class StreamRabbitDistributor implements DataDistributor {
   private Optional<Channel> channel;
    private Optional<Channel> registryChannel;
   private Map<String, Optional<String>> consumerTag;
-  private final QueueConfigs DEFAULT_QUEUE_CONFIG = new QueueConfigs(true, false, false, Collections.singletonMap("x-queue-type", "stream"));
+  private final QueueConfigs DURABLE_STREAM_CONFIG = new QueueConfigs(true, false, false, Collections.singletonMap("x-queue-type", "stream"));
 
     @Override
     public void init(SharedDataListener controller) {
@@ -47,7 +48,7 @@ public class StreamRabbitDistributor implements DataDistributor {
 
     private void initBoardRegistry() {
       this.registryChannel = createChannel();
-      declareQueue(REGISTRY_QUEUE_NAME, this.registryChannel, DEFAULT_QUEUE_CONFIG);
+      declareQueue(REGISTRY_QUEUE_NAME, this.registryChannel, DURABLE_STREAM_CONFIG);
       consumeMessages(REGISTRY_QUEUE_NAME, this.channel, msg -> {
         try {
           String msgBody = new String(msg.getBody(), "UTF-8");
@@ -85,32 +86,37 @@ public class StreamRabbitDistributor implements DataDistributor {
     }
 
     @Override
-    public void subscribe(String nickname, String boardName) {
+    public void subscribe(String boardName) {
       this.boardName = Optional.of(boardName);
       String edits = concat(boardName, BOARD_UPDATE);
       String usersc = concat(boardName, USER_UPDATE);
 
       Map<String, Object> args = new HashMap<>();
       args.put("x-queue-type", "stream");
-      args.put("x-message-ttl", 30000);
-      declareQueue(usersc, this.channel, new QueueConfigs(true, false, false, args));
-      declareQueue(edits, this.channel, DEFAULT_QUEUE_CONFIG);
+      args.put("max-age", "15s");
+      //args.put("x-stream-max-segment-size-bytes", 1048576); // 1MB
 
-      consumeMessages(edits, this.channel, msg -> {
-        try {
-          String msgBody = new String(msg.getBody(), "UTF-8");
-          //maybe here i wanna get some info from msg
-          updateListener.boardUpdate((JsonData) () -> msgBody);
-        } catch (UnsupportedEncodingException ex) {}
-      });
-      consumeMessages(usersc, this.channel, msg -> {
-        try {
-          String msgBody = new String(msg.getBody(), "UTF-8");
-          updateListener.cursorsUpdate((JsonData) () -> msgBody);
-        } catch (UnsupportedEncodingException exc) {
-          this.updateListener.notifyErrors("Parsing error cursor data", exc);
-        }
-      });
+      var userOk = declareQueue(usersc, this.channel, new QueueConfigs(true, false, false, args));
+      var editsOk = declareQueue(edits, this.channel, DURABLE_STREAM_CONFIG);
+
+      if (userOk.isPresent() && editsOk.isPresent()) {
+        consumeMessages(edits, this.channel, msg -> {
+          try {
+            String msgBody = new String(msg.getBody(), "UTF-8");
+            //maybe here i wanna get some info from msg
+            updateListener.boardUpdate((JsonData) () -> msgBody);
+          } catch (UnsupportedEncodingException ex) {}
+        });
+        consumeMessages(usersc, this.channel, msg -> {
+          try {
+            String msgBody = new String(msg.getBody(), "UTF-8");
+            updateListener.cursorsUpdate((JsonData) () -> msgBody);
+          } catch (UnsupportedEncodingException exc) {
+            this.updateListener.notifyErrors("Parsing error cursor data", exc);
+          }
+        });
+        updateListener.joined();
+      }
     }
 
     private void publishTo(String jsonMsg, String queueName, Optional<Channel> channel) {
@@ -128,18 +134,20 @@ public class StreamRabbitDistributor implements DataDistributor {
       return String.join("-", name, queueName);
     }
 
-    private void declareQueue(String name, Optional<Channel> channel, QueueConfigs configs) {
-      channel.ifPresent((ch) -> {
+    private Optional<DeclareOk> declareQueue(String name, Optional<Channel> channel, QueueConfigs configs) {
+      if (channel.isPresent()) {
         try {
-          ch.queueDeclare(name,
+          DeclareOk isOk = channel.get().queueDeclare(name,
                   configs.durable,
                   configs.notExclusive,
                   configs.notAutoDelete,
                   configs.params);
+          return Optional.of(isOk);
         } catch (IOException exc) {
           this.updateListener.notifyErrors("Declaration queue", exc);
         }
-      });
+      }
+      return Optional.empty();
     }
 
     private void consumeMessages(String queueName, Optional<Channel> channel, Consumer<Delivery> consume) {

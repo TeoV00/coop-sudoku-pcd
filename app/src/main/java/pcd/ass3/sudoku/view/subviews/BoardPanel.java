@@ -18,10 +18,12 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 
 import pcd.ass3.sudoku.Domain;
+import pcd.ass3.sudoku.Domain.BoardInfo;
 import pcd.ass3.sudoku.controller.Controller;
 import pcd.ass3.sudoku.utils.Pair;
 import pcd.ass3.sudoku.utils.Pos;
@@ -123,8 +125,7 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
           JOptionPane.YES_NO_OPTION);
       if (confirm == JOptionPane.YES_OPTION) {
           // Logica per lasciare la board
-          // controller.leaveBoard();
-          // JOptionPane.showMessageDialog(this, "You have left the board.");
+            controller.leaveBoard();
       }
     }
 
@@ -189,34 +190,35 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
         }
     }
 
+/*** HERE RECEIVED UPDATE FROM CONTROLLER 
+ * CALLS VIEW UPDATES USING INVOKELATER SWING UTILS
+ * 
+ * 
+ */
     @Override
-    public void joined(int[][] board) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void joined(BoardInfo boardInfo) {
     }
 
     @Override
     public void cellUpdate(Domain.CellUpdate edits) {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     public void cursorsUpdate(Domain.UserInfo cursor) {
-        usersCursors.put(cursor.nickname(), Color.decode(cursor.hexColor()));
+        //usersCursors.put(cursor.nickname(), Color.decode(cursor.hexColor()));
     }
 
     @Override
     public void boardLeft(Boolean hasLeft) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, "You have left the board."));
     }
 
     @Override
-    public void newBoardCreated(Domain.BoardInfo data) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void newBoardCreated(String name) {
     }
 
     @Override
     public void notifyError(String errMsg, Optional<String> description) {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
     
 

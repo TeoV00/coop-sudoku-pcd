@@ -19,10 +19,10 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 import pcd.ass3.sudoku.Domain;
+import pcd.ass3.sudoku.Domain.BoardInfo;
 import pcd.ass3.sudoku.controller.Controller;
 import pcd.ass3.sudoku.view.subviews.BoardPanel;
 import pcd.ass3.sudoku.view.subviews.ErrorsPanel;
@@ -46,12 +46,13 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         setLayout(new BorderLayout());
         JPanel sidebarPanel = createSidebarPanel();
         add(sidebarPanel, BorderLayout.WEST);
-        
+
         // TODO: if any board has joined dotn show anything
         // FIX: here "jj" and color should be set after
-        JPanel centerPanel = new BoardPanel(controller, "jj", 6, new Color(173, 216, 230));
+        JPanel centerPanel = new BoardPanel(controller, "boardInfo.name()", 6, new Color(173, 216, 230));
         add(centerPanel, BorderLayout.CENTER);
-    
+        subViews.add((UpdateObserver) centerPanel);
+        
         setVisible(true);
     }
 
@@ -130,7 +131,6 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         String selectedBoard = boardList.getSelectedValue();
         if (selectedBoard != null) {
             controller.joinToBoard(selectedBoard);
-            JOptionPane.showMessageDialog(this, "Joined board: " + selectedBoard);
         } else {
             JOptionPane.showMessageDialog(this, "Please select a board first.");
         }
@@ -141,11 +141,9 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
      * Receives updates from Controller
      */
     @Override
-    public void joined(int[][] board) {
+    public void joined(BoardInfo boardInfo) {
         //todo update here this view
-        updateSubViews(v -> {
-            v.joined(board);
-        });
+        System.out.println("joined");
     }
 
     @Override
@@ -170,15 +168,13 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
     @Override
     public void boardLeft(Boolean hasLeft) {
         // TODO: clear board panel grid
-        updateSubViews(v -> {
-            v.boardLeft(hasLeft);
-        });
+        //JOptionPane.showMessageDialog(this, "Board left successfully");
+        System.out.println("You have " + (hasLeft ? "sucessfully" : "NOT" ) + " left board");
     }
 
     @Override
-    public void newBoardCreated(Domain.BoardInfo data) {
-        String itemName = String.join("-", List.of(data.name(), data.createdBy()));
-        SwingUtilities.invokeLater(() -> boardListModel.addElement(itemName));
+    public void newBoardCreated(String name) {
+        boardListModel.addElement(name);
     }
     
 }
