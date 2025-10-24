@@ -9,7 +9,7 @@ repositories {
 
 dependencies {
     implementation("com.rabbitmq:amqp-client:5.18.0")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.20.0")
+    implementation("com.google.code.gson:gson:2.10.1")
 }
 
 testing {
