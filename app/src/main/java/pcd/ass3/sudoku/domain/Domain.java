@@ -1,8 +1,6 @@
-package pcd.ass3.sudoku;
+package pcd.ass3.sudoku.domain;
 
 import java.util.Map;
-
-import pcd.ass3.sudoku.utils.Pos;
 
 public interface Domain {
   public record UserInfo(String nickname, String hexColor, Pos cursorPos){};
