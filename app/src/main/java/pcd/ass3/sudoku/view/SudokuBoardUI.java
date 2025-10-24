@@ -22,9 +22,10 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
-import pcd.ass3.sudoku.Domain;
-import pcd.ass3.sudoku.Domain.BoardInfo;
 import pcd.ass3.sudoku.controller.Controller;
+import pcd.ass3.sudoku.domain.Domain.BoardInfo;
+import pcd.ass3.sudoku.domain.Domain.CellUpdate;
+import pcd.ass3.sudoku.domain.Domain.UserInfo;
 import pcd.ass3.sudoku.view.subviews.BoardPanel;
 import pcd.ass3.sudoku.view.subviews.ErrorsPanel;
 import pcd.ass3.sudoku.view.subviews.NoBoardPanel;
@@ -87,7 +88,7 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         // Lista delle board
         boardListModel = new DefaultListModel<>();
         boardListModel.clear();
-        for (Domain.BoardInfo boardInfo : controller.getPublishedBoards()) {
+        for (BoardInfo boardInfo : controller.getPublishedBoards()) {
             boardListModel.addElement(boardInfo.createdBy());
         }
       
@@ -155,14 +156,14 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
     }
 
     @Override
-    public void cellUpdate(Domain.CellUpdate edits) {
+    public void cellUpdate(CellUpdate edits) {
         updateSubViews(v -> {
             v.cellUpdate(edits);
         });
     }
 
     @Override
-    public void cursorsUpdate(Domain.UserInfo cursor) {
+    public void cursorsUpdate(UserInfo cursor) {
         updateSubViews(v -> {
             v.cursorsUpdate(cursor);
         });

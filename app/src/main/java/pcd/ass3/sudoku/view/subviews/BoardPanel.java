@@ -22,11 +22,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 
-import pcd.ass3.sudoku.Domain;
-import pcd.ass3.sudoku.Domain.BoardInfo;
 import pcd.ass3.sudoku.controller.Controller;
+import pcd.ass3.sudoku.domain.Domain.BoardInfo;
+import pcd.ass3.sudoku.domain.Domain.CellUpdate;
+import pcd.ass3.sudoku.domain.Domain.UserInfo;
+import pcd.ass3.sudoku.domain.Pos;
 import pcd.ass3.sudoku.utils.Pair;
-import pcd.ass3.sudoku.utils.Pos;
 import pcd.ass3.sudoku.view.UpdateObserver;
 
 
@@ -200,11 +201,11 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
     }
 
     @Override
-    public void cellUpdate(Domain.CellUpdate edits) {
+    public void cellUpdate(CellUpdate edits) {
     }
 
     @Override
-    public void cursorsUpdate(Domain.UserInfo cursor) {
+    public void cursorsUpdate(UserInfo cursor) {
         //usersCursors.put(cursor.nickname(), Color.decode(cursor.hexColor()));
     }
 

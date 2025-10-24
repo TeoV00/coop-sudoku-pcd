@@ -1,8 +1,8 @@
 package pcd.ass3.sudoku.view;
 
-import pcd.ass3.sudoku.Domain.BoardInfo;
-import pcd.ass3.sudoku.Domain.CellUpdate;
-import pcd.ass3.sudoku.Domain.UserInfo;
+import pcd.ass3.sudoku.domain.Domain.BoardInfo;
+import pcd.ass3.sudoku.domain.Domain.CellUpdate;
+import pcd.ass3.sudoku.domain.Domain.UserInfo;
 
 public interface UpdateObserver extends ErrorListener {
   public void joined(BoardInfo boardInfo);
