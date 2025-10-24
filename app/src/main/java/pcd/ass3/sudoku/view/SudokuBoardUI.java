@@ -19,6 +19,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 import pcd.ass3.sudoku.Domain;
@@ -26,14 +27,17 @@ import pcd.ass3.sudoku.Domain.BoardInfo;
 import pcd.ass3.sudoku.controller.Controller;
 import pcd.ass3.sudoku.view.subviews.BoardPanel;
 import pcd.ass3.sudoku.view.subviews.ErrorsPanel;
+import pcd.ass3.sudoku.view.subviews.NoBoardPanel;
 
 public class SudokuBoardUI extends JFrame implements UpdateObserver {
     
     private DefaultListModel<String> boardListModel;
     private final Controller controller;
     private JList<String> boardList;
+    private JButton joinButton;
     private ErrorListener errorsListener;
     private final List<UpdateObserver> subViews;
+    private JPanel centralPanel;
 
     public SudokuBoardUI(Controller controller) {
         this.subViews = new ArrayList<>();
@@ -47,17 +51,16 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         JPanel sidebarPanel = createSidebarPanel();
         add(sidebarPanel, BorderLayout.WEST);
 
-        // TODO: if any board has joined dotn show anything
-        // FIX: here "jj" and color should be set after
-        JPanel centerPanel = new BoardPanel(controller, "boardInfo.name()", 6, new Color(173, 216, 230));
-        add(centerPanel, BorderLayout.CENTER);
-        subViews.add((UpdateObserver) centerPanel);
+        //JPanel centerPanel = new BoardPanel(controller, "boardInfo.name()", 6, new Color(173, 216, 230));
+        // subViews.add((UpdateObserver) centerPanel);
+        this.centralPanel = new NoBoardPanel();
+        add(centralPanel, BorderLayout.CENTER);
         
         setVisible(true);
     }
 
     private void updateSubViews(Consumer<UpdateObserver> fun) {
-        this.subViews.forEach(view -> fun.accept(view));
+        runAndValidate(() -> this.subViews.forEach(view -> fun.accept(view)));
     }
     
     private JPanel createSidebarPanel() {
@@ -97,7 +100,7 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         listScrollPane.setBorder(null);
         
         // JOIN Button
-        JButton joinButton = new JButton("JOIN");
+        this.joinButton = new JButton("JOIN");
         joinButton.setFont(new Font("Arial", Font.BOLD, 14));
         joinButton.setFocusPainted(false);
         joinButton.addActionListener(e -> joinSelectedBoard());
@@ -118,7 +121,6 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         
         return sidebar;
     }
-    
     
     private void addNewBoard() {
         String boardName = JOptionPane.showInputDialog(this, "Enter new board name:");
@@ -142,8 +144,14 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
      */
     @Override
     public void joined(BoardInfo boardInfo) {
-        //todo update here this view
-        System.out.println("joined");
+        runAndValidate(() -> {
+            boardList.setEnabled(false);
+            joinButton.setEnabled(false);
+            remove(this.centralPanel);
+            this.centralPanel = new BoardPanel(controller, boardInfo.name(), 6, new Color(173, 216, 230));
+            add(centralPanel, BorderLayout.CENTER);
+            subViews.add((UpdateObserver) centralPanel);
+        });
     }
 
     @Override
@@ -162,19 +170,30 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
 
     @Override
     public void notifyError(String errMsg, Optional<String> description) {
-        this.errorsListener.notifyError(errMsg, description);
+        runAndValidate(() -> this.errorsListener.notifyError(errMsg, description));
     }
 
     @Override
     public void boardLeft(Boolean hasLeft) {
-        // TODO: clear board panel grid
-        //JOptionPane.showMessageDialog(this, "Board left successfully");
-        System.out.println("You have " + (hasLeft ? "sucessfully" : "NOT" ) + " left board");
+        runAndValidate(() -> {
+            boardList.setEnabled(true);
+            joinButton.setEnabled(true);
+            remove(this.centralPanel);
+            this.centralPanel = new NoBoardPanel();
+            add(centralPanel, BorderLayout.CENTER);
+        });
     }
 
     @Override
     public void newBoardCreated(String name) {
-        boardListModel.addElement(name);
+        runAndValidate(() -> boardListModel.addElement(name));
+    }
+
+    public void runAndValidate(Runnable doRun) {
+        SwingUtilities.invokeLater(() -> {
+            doRun.run();
+            validate();
+        });
     }
     
 }

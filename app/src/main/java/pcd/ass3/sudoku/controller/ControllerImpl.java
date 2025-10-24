@@ -14,11 +14,11 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     private final DataDistributor dataDistributor;
     private UpdateObserver observer;
-    private Optional<String> boardName;
+    private Optional<String> boardNameJoined;
 
     public ControllerImpl(DataDistributor dataDistributor) {
       this.dataDistributor = dataDistributor;
-      this.boardName = Optional.empty();
+      this.boardNameJoined = Optional.empty();
     }
 
     public void initDataSharing(){
@@ -61,7 +61,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public void boardLeft(Boolean hasLeft) {
-      this.boardName = hasLeft ? Optional.empty() : boardName;
+      this.boardNameJoined = hasLeft ? Optional.empty() : boardNameJoined;
       observer.boardLeft(hasLeft);
     }
 
@@ -127,7 +127,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public void joinToBoard(String boardName) {
-      this.boardName = Optional.of(boardName);
+      this.boardNameJoined = Optional.of(boardName);
       this.dataDistributor.subscribe(boardName);
     }
 

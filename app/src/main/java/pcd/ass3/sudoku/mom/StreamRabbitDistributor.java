@@ -94,7 +94,7 @@ public class StreamRabbitDistributor implements DataDistributor {
       Map<String, Object> args = new HashMap<>();
       args.put("x-queue-type", "stream");
       args.put("max-age", "15s");
-      //args.put("x-stream-max-segment-size-bytes", 1048576); // 1MB
+      args.put("x-stream-max-segment-size-bytes", 1048576); // 1MB
 
       var userOk = declareQueue(usersc, this.channel, new QueueConfigs(true, false, false, args));
       var editsOk = declareQueue(edits, this.channel, DURABLE_STREAM_CONFIG);
