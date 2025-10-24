@@ -2,20 +2,22 @@ package pcd.ass3.sudoku.controller;
 
 import java.util.List;
 
-import pcd.ass3.sudoku.Domain.BoardInfo;
-import pcd.ass3.sudoku.utils.Pos;
+import pcd.ass3.sudoku.domain.Domain.BoardInfo;
+import pcd.ass3.sudoku.domain.Pos;
 import pcd.ass3.sudoku.view.UpdateObserver;
 
 public interface Controller {
 
   void setObserver(UpdateObserver obseeveObserver);
 
+  void setUser(String nickname, String hexColor);
+
   /**
    * Sets the value of a sudoku cell.
    * @param cellPos cell position
    * @param value value to set
    */
-  void setCellValue(Pos cellPos, int value);
+  void setCellValue(Pos cellPos, String value);
 
   /**
    * Gets the list of available published boards.

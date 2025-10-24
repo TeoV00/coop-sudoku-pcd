@@ -18,8 +18,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 
 import pcd.ass3.sudoku.controller.Controller;
@@ -29,6 +27,7 @@ import pcd.ass3.sudoku.domain.Domain.UserInfo;
 import pcd.ass3.sudoku.domain.Pos;
 import pcd.ass3.sudoku.utils.Pair;
 import pcd.ass3.sudoku.view.UpdateObserver;
+import static pcd.ass3.sudoku.view.ViewUtilities.makeBorder;
 
 
 public final class BoardPanel extends JPanel implements UpdateObserver {
@@ -36,14 +35,12 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
     private final JPanel gridPanel;
     private final JButton[][] cells;
     private Pair<Pos, JButton> selectedCell = null;
-    private final Color selectedCellColor;
-    private final Map<String, Color> usersCursors;
+    private final Map<String, Pair<Pos, Color>> usersCursors;
     private final Controller controller;
 
     public BoardPanel(Controller controller, String boardName, int size, Color usrColor) {
         this.controller = controller;
         this.usersCursors = new HashMap();
-        this.selectedCellColor = usrColor;
         setLayout(new BorderLayout());
         this.setBorder(new EmptyBorder(20, 20, 20, 20));
         this.setBackground(Color.WHITE);
@@ -110,15 +107,6 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
         this.add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    private Border makeBorder(int row, int col) {
-        int top = (row % 3 == 0) ? 3 : 1;
-        int left = (col % 3 == 0) ? 3 : 1;
-        int bottom = (row == 8) ? 3 : 1;
-        int right = (col == 8) ? 3 : 1;
-        return BorderFactory.createMatteBorder(top, left, bottom, right, Color.BLACK);
-
-    }
-
     private void leaveBoard() {
       int confirm = JOptionPane.showConfirmDialog(this, 
           "Are you sure you want to leave this board?", 
@@ -131,14 +119,8 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
     }
 
     private void selectCell(int row, int col) {
-        // Ripristina il colore della cella precedentemente selezionata
-        if (selectedCell != null) {
-            selectedCell.y().setBorder(makeBorder(row, col));
-        }
         selectedCell = new Pair(new Pos(row, col),cells[row][col]);
         controller.selectCell(new Pos(row, col));
-        selectedCell.y().setBackground(Color.BLACK);
-        selectedCell.y().setBorder(BorderFactory.createMatteBorder(3, 3, 3, 3, selectedCellColor));
     }
 
     private JPanel createNumberPanel() {
@@ -177,7 +159,7 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
     private void insertNumber(int number) {
         if (selectedCell != null) {
             selectedCell.y().setText(String.valueOf(number));
-            controller.setCellValue(selectedCell.x(), number);
+            controller.setCellValue(selectedCell.x(), String.valueOf(number));
         } else {
             JOptionPane.showMessageDialog(this, "Seleziona prima una cella!");
         }
@@ -186,6 +168,7 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
     private void clearSelectedCell() {
         if (selectedCell != null) {
             selectedCell.y().setText("");
+            controller.setCellValue(selectedCell.x(), "");
         } else {
             JOptionPane.showMessageDialog(this, "Seleziona prima una cella!");
         }
@@ -196,22 +179,30 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
  * 
  * 
  */
-    @Override
-    public void joined(BoardInfo boardInfo) {
-    }
 
     @Override
     public void cellUpdate(CellUpdate edits) {
+        Pos pos = edits.cellPos();
+        cells[pos.row()][pos.col()].setText(edits.cellValue());
     }
 
     @Override
     public void cursorsUpdate(UserInfo cursor) {
-        //usersCursors.put(cursor.nickname(), Color.decode(cursor.hexColor()));
+        // reset old cell border
+        if (usersCursors.containsKey(cursor.nickname())) {
+            var oldPos = usersCursors.get(cursor.nickname()).x();
+            cells[oldPos.row()][oldPos.col()].setBorder(makeBorder(oldPos.row(), oldPos.col()));
+        }
+        // set new cell boarder
+        Color usrColor = Color.decode(cursor.hexColor());
+        Pos pos = cursor.cursorPos();
+        usersCursors.put(cursor.nickname(), new Pair<>(pos, usrColor));
+        var cell = cells[pos.row()][pos.col()];
+        cell.setBorder(BorderFactory.createMatteBorder(3, 3, 3, 3, usrColor));
     }
 
     @Override
     public void boardLeft(Boolean hasLeft) {
-        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, "You have left the board."));
     }
 
     @Override
@@ -221,6 +212,9 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
     @Override
     public void notifyError(String errMsg, Optional<String> description) {
     }
-    
 
+    @Override
+    public void joined(BoardInfo boardInfo) {
+    }
+    
 }

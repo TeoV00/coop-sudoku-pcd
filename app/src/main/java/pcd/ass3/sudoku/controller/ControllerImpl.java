@@ -4,10 +4,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import pcd.ass3.sudoku.Domain;
+import pcd.ass3.sudoku.domain.Domain;
+import pcd.ass3.sudoku.domain.Domain.BoardInfo;
+import pcd.ass3.sudoku.domain.Domain.CellUpdate;
+import pcd.ass3.sudoku.domain.Pos;
 import pcd.ass3.sudoku.mom.DataDistributor;
 import pcd.ass3.sudoku.mom.SharedDataListener;
-import pcd.ass3.sudoku.utils.Pos;
 import pcd.ass3.sudoku.view.UpdateObserver;
 
 public class ControllerImpl implements Controller, SharedDataListener {
@@ -15,10 +17,20 @@ public class ControllerImpl implements Controller, SharedDataListener {
     private final DataDistributor dataDistributor;
     private UpdateObserver observer;
     private Optional<String> boardNameJoined;
+    private Optional<String> nickname;
+    private Optional<String> userHexColor;
 
     public ControllerImpl(DataDistributor dataDistributor) {
       this.dataDistributor = dataDistributor;
       this.boardNameJoined = Optional.empty();
+      this.nickname = Optional.empty();
+      this.userHexColor = Optional.empty();
+    }
+
+    @Override
+    public void setUser(String nickname, String hexColor) {
+        this.nickname = Optional.of(nickname);
+        this.userHexColor = Optional.of(hexColor);
     }
 
     public void initDataSharing(){
@@ -27,27 +39,23 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public void joined() {
-      var boardsJson = this.dataDistributor.existingBoards();
-      //TODO: parse JsonData of registered boards the get the one with required boardName
-      //TODO here update view providing just initial board cells
-      // other cells are updated by method boardUpdate()
-      // filter by this.boardName
-      var fakeInfo = new Domain.BoardInfo(Map.of(), "createdBy", "name");
-      observer.joined(fakeInfo);
+      boardNameJoined.ifPresent(name -> {
+        //TODO here update view providing just initial board cells   
+        boardInfoOf(name).ifPresent(info -> observer.joined(info));   
+      });
     }
 
     @Override
     public void boardUpdate(DataDistributor.JsonData edits) {
-        System.out.println(edits.getJsonString());
-        //TODO: parse edits and get info
-        observer.cellUpdate(null);
+        var cellUpdates = Domain.CellUpdate.fromJson(edits.getJsonString());
+        observer.cellUpdate(cellUpdates);
     }
 
     @Override
     public void cursorsUpdate(DataDistributor.JsonData cursor) {
         System.out.println(cursor.getJsonString());
-        //TODO: parse user updates cursor and get info
-        observer.cursorsUpdate(null);
+        var userInfo = Domain.UserInfo.fromJson(cursor.getJsonString());
+        observer.cursorsUpdate(userInfo);
     }
 
     @Override
@@ -67,57 +75,61 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public void newBoardCreated(DataDistributor.JsonData data) {
-      observer.notifyError("New board created --> " + data.getJsonString(), Optional.empty());
-      //TODO: extract info of board in order to be shows as available board you can join
-      var boardData = new Domain.BoardInfo(Map.of(), "createdBy", data.getJsonString());
+      var boardData = BoardInfo.fromJson(data.getJsonString());
       observer.newBoardCreated(boardData.name());
     }
 
-      // private Optional<String> toJson(Object obj) {
-      //   Optional<String> data = Optional.empty();
-      //   ObjectMapper mapper = new ObjectMapper();
-      //   try {
-      //     data = Optional.ofNullable(mapper.writeValueAsString(obj));
-      //   } catch (JsonProcessingException exc) {
-      //     this.updateListener.notifyErrors("Json parsing error", exc);
-      //   }
-      //   return data;
-      // }
+    /** 
+     * Below there are method of requests from user to be published 
+     * */
 
-    /** Below there are method of requests from user */
     @Override
-    public void setCellValue(Pos cellPos, int value) {
-      // TODO: Replace with actual JsonData creation logic
+    public void setCellValue(Pos cellPos, String value) {
       DataDistributor.JsonData jsonData = () -> {
-          return "";
+          return (new CellUpdate(cellPos, value)).toJson();
       };
       this.dataDistributor.shareUpdate(jsonData);
     }
 
     @Override
-    public List<Domain.BoardInfo> getPublishedBoards() {
-      return this.dataDistributor.existingBoards().stream()
-                .map(d -> new Domain.BoardInfo(Map.of(), "author", "board-name"))
-                .toList();
+    public List<BoardInfo> getPublishedBoards() {
+      return this.dataDistributor.existingBoards()
+                                 .stream()
+                                 .map(d -> BoardInfo.fromJson(d.getJsonString()))
+                                 .toList();
     }
 
     @Override
     public void createNewBoard(String name, int size) {
-      // TODO: Replace with actual JsonData creation logic
-      DataDistributor.JsonData jsonData = () -> {
-          return name;
-      };
-      //TODO before registering check if a board with same name exists
-      this.dataDistributor.registerBoard(jsonData);
+      if (boardInfoOf(name).isEmpty()) {
+        //TODO: initBoard should contain complete final board (solution) and initial board
+        Map<Pos, Integer> initBoard = Map.of();
+        DataDistributor.JsonData jsonData = () -> {
+              return new BoardInfo(initBoard, this.nickname.orElse("unknown"), name).toJson();
+          };
+        this.dataDistributor.registerBoard(jsonData);
+      } else {
+        this.observer.notifyError("Board called " + name + " already exists", Optional.empty());
+      }
+    }
+
+    private Optional<BoardInfo> boardInfoOf(String name) {
+      return this.getPublishedBoards().stream()
+                                      .filter(i -> i.name().equals(name))
+                                      .findFirst();  
     }
 
     @Override
     public void selectCell(Pos cellPos) {
-      // TODO: Replace with actual JsonData creation logic
-      DataDistributor.JsonData jsonData = () -> {
-          return "";
-      };
-      this.dataDistributor.updateCursor(jsonData);
+        if (this.nickname.isPresent() && this.userHexColor.isPresent()) {
+            DataDistributor.JsonData jsonData = () -> {
+                return new Domain.UserInfo(
+                    this.nickname.get(), 
+                    this.userHexColor.get(), 
+                    cellPos).toJson();
+            };
+            this.dataDistributor.updateCursor(jsonData);
+        }
     }
 
     @Override

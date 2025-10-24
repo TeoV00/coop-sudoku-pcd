@@ -14,6 +14,7 @@ public class CooperativeSudoku {
         SharedDataListener listener = controller;
         var gui = new SudokuBoardUI(controller);
         controller.setObserver(gui);
+        controller.setUser("Marc", "#ff043f");
         javax.swing.SwingUtilities.invokeLater(() -> gui.setVisible(true));
 
         distr.init(listener);
