@@ -15,4 +15,7 @@ public class ViewUtilities {
         return BorderFactory.createMatteBorder(top, left, bottom, right, Color.BLACK);
     }
 
+    public static String hexColor(Color color) {
+        return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
+    }
 }

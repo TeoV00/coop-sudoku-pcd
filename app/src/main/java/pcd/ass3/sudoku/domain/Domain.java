@@ -1,7 +1,5 @@
 package pcd.ass3.sudoku.domain;
 
-import java.util.Map;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -36,7 +34,8 @@ public interface Domain {
     }
 
     public record BoardInfo(
-        Map<Pos, Integer> board,
+        int[][] riddle,
+        int[][] solution,
         String createdBy,
         String name
     ){

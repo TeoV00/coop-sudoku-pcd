@@ -182,6 +182,7 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
 
     @Override
     public void cellUpdate(CellUpdate edits) {
+        System.out.println("recv edits: "+ edits );
         Pos pos = edits.cellPos();
         cells[pos.row()][pos.col()].setText(edits.cellValue());
     }
@@ -215,6 +216,16 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
 
     @Override
     public void joined(BoardInfo boardInfo) {
+        int[][] riddle = boardInfo.riddle();
+        int rows = riddle.length;
+        int cols = riddle[0].length;
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                int value = riddle[r][c];
+                String str = value != 0 ? String.valueOf(value) : "";
+                cells[r][c].setText(str);
+            }
+        }
     }
     
 }

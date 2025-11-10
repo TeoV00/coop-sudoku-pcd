@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -31,6 +32,8 @@ import pcd.ass3.sudoku.view.subviews.ErrorsPanel;
 import pcd.ass3.sudoku.view.subviews.NoBoardPanel;
 
 public class SudokuBoardUI extends JFrame implements UpdateObserver {
+
+    private final int BOARD_SIZE = 9;
     
     private DefaultListModel<String> boardListModel;
     private final Controller controller;
@@ -47,16 +50,27 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1200, 800);
         setLocationRelativeTo(null);
-        
+
+        // Prompt for nickname
+        String nickname = null;
+        while (nickname == null || nickname.trim().isEmpty()) {
+            nickname = JOptionPane.showInputDialog(this, "Enter your nickname:");
+            if (nickname == null) System.exit(0); // User cancelled
+        }
+
+        // Prompt for color selection
+        Color selectedColor = JColorChooser.showDialog(this, "Select your color", Color.BLUE);
+        if (selectedColor == null) selectedColor = Color.BLUE; // Default if cancelled
+
+        controller.setUser(nickname, ViewUtilities.hexColor(selectedColor));
+
         setLayout(new BorderLayout());
         JPanel sidebarPanel = createSidebarPanel();
         add(sidebarPanel, BorderLayout.WEST);
 
-        //JPanel centerPanel = new BoardPanel(controller, "boardInfo.name()", 6, new Color(173, 216, 230));
-        // subViews.add((UpdateObserver) centerPanel);
         this.centralPanel = new NoBoardPanel();
         add(centralPanel, BorderLayout.CENTER);
-        
+
         setVisible(true);
     }
 
@@ -126,7 +140,7 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
     private void addNewBoard() {
         String boardName = JOptionPane.showInputDialog(this, "Enter new board name:");
         if (boardName != null && !boardName.trim().isEmpty()) {
-            controller.createNewBoard(boardName, 6);
+            controller.createNewBoard(boardName, BOARD_SIZE);
         }
     }
     
@@ -149,7 +163,7 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
             boardList.setEnabled(false);
             joinButton.setEnabled(false);
             remove(this.centralPanel);
-            this.centralPanel = new BoardPanel(controller, boardInfo.name(), 6, new Color(173, 216, 230));
+            this.centralPanel = new BoardPanel(controller, boardInfo.name(), BOARD_SIZE, new Color(173, 216, 230));
             add(centralPanel, BorderLayout.CENTER);
             subViews.add((UpdateObserver) centralPanel);
         });

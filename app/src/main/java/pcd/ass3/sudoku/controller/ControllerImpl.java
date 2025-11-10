@@ -1,13 +1,14 @@
 package pcd.ass3.sudoku.controller;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import pcd.ass3.sudoku.domain.Domain;
 import pcd.ass3.sudoku.domain.Domain.BoardInfo;
 import pcd.ass3.sudoku.domain.Domain.CellUpdate;
 import pcd.ass3.sudoku.domain.Pos;
+import pcd.ass3.sudoku.domain.SudokuBoard;
+import pcd.ass3.sudoku.domain.SudokuGenerator;
 import pcd.ass3.sudoku.mom.DataDistributor;
 import pcd.ass3.sudoku.mom.SharedDataListener;
 import pcd.ass3.sudoku.view.UpdateObserver;
@@ -25,6 +26,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
       this.boardNameJoined = Optional.empty();
       this.nickname = Optional.empty();
       this.userHexColor = Optional.empty();
+      this.dataDistributor.init(this);
     }
 
     @Override
@@ -33,14 +35,10 @@ public class ControllerImpl implements Controller, SharedDataListener {
         this.userHexColor = Optional.of(hexColor);
     }
 
-    public void initDataSharing(){
-      this.dataDistributor.init(this);
-    };
-
     @Override
     public void joined() {
       boardNameJoined.ifPresent(name -> {
-        //TODO here update view providing just initial board cells   
+        //TODO here update view providing just initial board cells
         boardInfoOf(name).ifPresent(info -> observer.joined(info));   
       });
     }
@@ -102,10 +100,9 @@ public class ControllerImpl implements Controller, SharedDataListener {
     @Override
     public void createNewBoard(String name, int size) {
       if (boardInfoOf(name).isEmpty()) {
-        //TODO: initBoard should contain complete final board (solution) and initial board
-        Map<Pos, Integer> initBoard = Map.of();
+        SudokuBoard boards = SudokuGenerator.generate();
         DataDistributor.JsonData jsonData = () -> {
-              return new BoardInfo(initBoard, this.nickname.orElse("unknown"), name).toJson();
+              return new BoardInfo(boards.riddle(), boards.complete(), this.nickname.orElse("unknown"), name).toJson();
           };
         this.dataDistributor.registerBoard(jsonData);
       } else {
