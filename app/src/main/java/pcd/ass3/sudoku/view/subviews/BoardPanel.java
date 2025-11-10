@@ -222,10 +222,14 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 int value = riddle[r][c];
-                String str = value != 0 ? String.valueOf(value) : "";
-                cells[r][c].setText(str);
+                if (value != 0) {
+                    JButton cell = cells[r][c];
+                    cell.setText( String.valueOf(value));
+                    cell.setEnabled(false); 
+                }
             }
         }
+        this.controller.boardLoaded();
     }
     
 }

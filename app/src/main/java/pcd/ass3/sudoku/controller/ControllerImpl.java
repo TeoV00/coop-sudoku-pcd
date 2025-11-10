@@ -37,10 +37,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public void joined() {
-      boardNameJoined.ifPresent(name -> {
-        //TODO here update view providing just initial board cells
-        boardInfoOf(name).ifPresent(info -> observer.joined(info));   
-      });
+      // joined the stream of updates
     }
 
     @Override
@@ -137,12 +134,19 @@ public class ControllerImpl implements Controller, SharedDataListener {
     @Override
     public void joinToBoard(String boardName) {
       this.boardNameJoined = Optional.of(boardName);
-      this.dataDistributor.subscribe(boardName);
+      boardInfoOf(boardName).ifPresent(info -> observer.joined(info));   
+    }
+
+    @Override
+    public void boardLoaded() {
+      this.boardNameJoined.ifPresent(name -> this.dataDistributor.subscribe(name));
     }
 
     @Override
     public void setObserver(UpdateObserver observer) {
         this.observer = observer;
     }
+
+   
 
 }

@@ -17,7 +17,7 @@ public class SudokuGenerator {
         Riddle riddle = Creator.createRiddle(matrix);
         var riddleArray = convert(riddle.getArray());
         int[][] complete = convert(matrix.getArray());
-        return new SudokuBoard(complete, riddleArray);
+        return new SudokuBoard(riddleArray, complete);
     }
 
     static private int[][] convert(byte[][] byteArray) {

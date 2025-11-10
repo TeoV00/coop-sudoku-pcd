@@ -49,4 +49,7 @@ public interface Controller {
    * @param boardName name of the board to join
    */
   void joinToBoard(String boardName);
+
+  /** Notify controller that initial board data are successfully loaded.*/
+  void boardLoaded();
 }

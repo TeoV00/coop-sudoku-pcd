@@ -166,6 +166,9 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
             this.centralPanel = new BoardPanel(controller, boardInfo.name(), BOARD_SIZE, new Color(173, 216, 230));
             add(centralPanel, BorderLayout.CENTER);
             subViews.add((UpdateObserver) centralPanel);
+            updateSubViews(v -> {
+                v.joined(boardInfo);
+            });
         });
     }
 
