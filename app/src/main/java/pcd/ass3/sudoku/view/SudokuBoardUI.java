@@ -99,12 +99,12 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         headerPanel.add(boardsLabel, BorderLayout.CENTER);
         headerPanel.add(addButton, BorderLayout.EAST);
         
-        // Lista delle board
+
         boardListModel = new DefaultListModel<>();
-        boardListModel.clear();
-        for (BoardInfo boardInfo : controller.getPublishedBoards()) {
-            boardListModel.addElement(boardInfo.createdBy());
-        }
+        //boardListModel.clear();
+        // for (BoardInfo boardInfo : controller.getPublishedBoards()) {
+        //     boardListModel.addElement(boardInfo.name());
+        // }
       
         boardList = new JList<>(boardListModel);
         boardList.setFont(new Font("Arial", Font.PLAIN, 14));

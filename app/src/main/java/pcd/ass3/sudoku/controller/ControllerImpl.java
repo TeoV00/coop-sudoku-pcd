@@ -88,10 +88,15 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public List<BoardInfo> getPublishedBoards() {
-      return this.dataDistributor.existingBoards()
+
+      var list = this.dataDistributor.existingBoards()
                                  .stream()
                                  .map(d -> BoardInfo.fromJson(d.getJsonString()))
                                  .toList();
+
+      list.forEach(i -> System.out.println(i));
+
+      return list;
     }
 
     @Override
