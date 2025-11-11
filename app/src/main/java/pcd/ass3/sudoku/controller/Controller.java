@@ -17,7 +17,7 @@ public interface Controller {
    * @param cellPos cell position
    * @param value value to set
    */
-  void setCellValue(Pos cellPos, String value);
+  void setCellValue(Pos cellPos, int value);
 
   /**
    * Gets the list of available published boards.

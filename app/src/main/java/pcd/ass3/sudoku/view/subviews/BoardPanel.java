@@ -119,7 +119,7 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
     }
 
     private void selectCell(int row, int col) {
-        selectedCell = new Pair(new Pos(row, col),cells[row][col]);
+        selectedCell = new Pair(new Pos(row, col), cells[row][col]);
         controller.selectCell(new Pos(row, col));
     }
 
@@ -159,7 +159,7 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
     private void insertNumber(int number) {
         if (selectedCell != null) {
             selectedCell.y().setText(String.valueOf(number));
-            controller.setCellValue(selectedCell.x(), String.valueOf(number));
+            controller.setCellValue(selectedCell.x(), number);
         } else {
             JOptionPane.showMessageDialog(this, "Seleziona prima una cella!");
         }
@@ -168,7 +168,7 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
     private void clearSelectedCell() {
         if (selectedCell != null) {
             selectedCell.y().setText("");
-            controller.setCellValue(selectedCell.x(), "");
+            controller.setCellValue(selectedCell.x(), 0);
         } else {
             JOptionPane.showMessageDialog(this, "Seleziona prima una cella!");
         }
@@ -184,7 +184,8 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
     public void cellUpdate(CellUpdate edits) {
         System.out.println("recv edits: "+ edits );
         Pos pos = edits.cellPos();
-        cells[pos.row()][pos.col()].setText(edits.cellValue());
+        String stringValue = edits.cellValue() == 0 ? "" : String.valueOf(edits.cellValue());
+        cells[pos.row()][pos.col()].setText(stringValue);
     }
 
     @Override

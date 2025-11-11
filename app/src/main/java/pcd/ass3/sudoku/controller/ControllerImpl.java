@@ -54,7 +54,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
     private void cacheEdits(CellUpdate edits) {
       boardInfoJoined.ifPresent((boardInfo) -> {
         Pos p = edits.cellPos();
-        boardInfo.riddle()[p.row()][p.col()] = Integer.parseInt(edits.cellValue());
+        boardInfo.riddle()[p.row()][p.col()] = edits.cellValue();
       });
     }
 
@@ -91,15 +91,15 @@ public class ControllerImpl implements Controller, SharedDataListener {
      * */
 
     @Override
-    public void setCellValue(Pos cellPos, String value) {
-      if (this.boardInfoJoined.isPresent()) {
-        var board = this.boardInfoJoined.get();
-        var sol = board.solution();
-        if (sol[cellPos.row()][cellPos.col()] != Integer.parseInt(value)) {
-          System.out.println("valore errato");
-          this.observer.notifyError("valore errato", Optional.empty());
-        }
-      }
+    public void setCellValue(Pos cellPos, int value) {
+      // if (this.boardInfoJoined.isPresent()) {
+      //   var board = this.boardInfoJoined.get();
+      //   var sol = board.solution();
+      //   if (sol[cellPos.row()][cellPos.col()] != Integer.parseInt(value)) {
+      //     System.out.println("valore errato");
+      //     this.observer.notifyError("valore errato", Optional.empty());
+      //   }
+      // }
 
       DataDistributor.JsonData jsonData = () -> {
         return (new CellUpdate(cellPos, value)).toJson();

@@ -24,7 +24,7 @@ public interface Domain {
         }
     }
 
-    public record CellUpdate (Pos cellPos, String cellValue){
+    public record CellUpdate (Pos cellPos, int cellValue){
         public String toJson() {
         return gson.toJson(this);
         }
