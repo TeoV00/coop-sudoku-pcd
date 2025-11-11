@@ -18,6 +18,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
     private final DataDistributor dataDistributor;
     private UpdateObserver observer;
     private Optional<String> boardNameJoined;
+    private Optional<BoardInfo> boardInfoJoined;
     private Optional<String> nickname;
     private Optional<String> userHexColor;
 
@@ -37,7 +38,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public void joined() {
-      // joined the stream of updates
+      // joined the stream of user updates
     }
 
     @Override
@@ -80,8 +81,17 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public void setCellValue(Pos cellPos, String value) {
+      if (this.boardInfoJoined.isPresent()) {
+        var board = this.boardInfoJoined.get();
+        var sol = board.solution();
+        if (sol[cellPos.row()][cellPos.col()] != Integer.parseInt(value)) {
+          System.out.println("valore errato");
+          this.observer.notifyError("valore errato", Optional.empty());
+        }
+      }
+      
       DataDistributor.JsonData jsonData = () -> {
-          return (new CellUpdate(cellPos, value)).toJson();
+        return (new CellUpdate(cellPos, value)).toJson();
       };
       this.dataDistributor.shareUpdate(jsonData);
     }
@@ -139,7 +149,10 @@ public class ControllerImpl implements Controller, SharedDataListener {
     @Override
     public void joinToBoard(String boardName) {
       this.boardNameJoined = Optional.of(boardName);
-      boardInfoOf(boardName).ifPresent(info -> observer.joined(info));   
+      boardInfoOf(boardName).ifPresent(info -> {
+        observer.joined(info);
+        this.boardInfoJoined = Optional.of(info);
+      });   
     }
 
     @Override

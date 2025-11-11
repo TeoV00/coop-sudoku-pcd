@@ -5,6 +5,4 @@ build
 gradlew*
 gradle/wrapper/gradle-wrapper.jar
 gradle/libs.versions.toml
-.metals/metals.lock.db
-.metals/metals.log
-.metals/metals.mv.db
+.metals/*
