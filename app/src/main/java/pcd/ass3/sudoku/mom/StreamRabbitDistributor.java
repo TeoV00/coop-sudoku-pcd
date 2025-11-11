@@ -30,6 +30,8 @@ public class StreamRabbitDistributor implements DataDistributor {
   private final String BOARD_UPDATE = "edits";
   private final String USER_UPDATE = "user-cursors";
   private static final int PREFETCH_COUNT = 200;
+  private final static String FIRST_STREAM_OFFSET = "first";
+  private final String initial_cursors_offset = "last";
 
   private SharedDataListener updateListener;
   private Optional<String> boardName;
@@ -55,7 +57,7 @@ public class StreamRabbitDistributor implements DataDistributor {
           boardRegistry.add((JsonData) () -> msgBody);
           updateListener.newBoardCreated((JsonData) () -> msgBody);
         } catch (UnsupportedEncodingException ex) {}
-      });
+      }, FIRST_STREAM_OFFSET);
     }
 
     @Override
@@ -93,7 +95,7 @@ public class StreamRabbitDistributor implements DataDistributor {
 
       Map<String, Object> args = new HashMap<>();
       args.put("x-queue-type", "stream");
-      args.put("max-age", "15s");
+      args.put("max-age", "1m");
       args.put("x-stream-max-segment-size-bytes", 1048576); // 1MB
 
       var userOk = declareQueue(usersc, this.channel, new QueueConfigs(true, false, false, args));
@@ -106,7 +108,8 @@ public class StreamRabbitDistributor implements DataDistributor {
             //maybe here i wanna get some info from msg
             updateListener.boardUpdate((JsonData) () -> msgBody);
           } catch (UnsupportedEncodingException ex) {}
-        });
+        }, FIRST_STREAM_OFFSET);
+
         consumeMessages(usersc, this.channel, msg -> {
           try {
             String msgBody = new String(msg.getBody(), "UTF-8");
@@ -114,7 +117,7 @@ public class StreamRabbitDistributor implements DataDistributor {
           } catch (UnsupportedEncodingException exc) {
             this.updateListener.notifyErrors("Parsing error cursor data", exc);
           }
-        });
+        }, initial_cursors_offset);
         updateListener.joined();
       }
     }
@@ -150,17 +153,16 @@ public class StreamRabbitDistributor implements DataDistributor {
       return Optional.empty();
     }
 
-    private void consumeMessages(String queueName, Optional<Channel> channel, Consumer<Delivery> consume) {
+    private void consumeMessages(String queueName, Optional<Channel> channel, Consumer<Delivery> consume, String consumeOffset) {
       Optional<String> tag = Optional.empty();
       if (channel.isPresent()) {
         Channel ch = channel.get();
         boolean autoAck = false;
         try {
           ch.basicQos(PREFETCH_COUNT);
-          String cTag = ch.basicConsume(
-            queueName,
+          String cTag = ch.basicConsume(queueName,
             autoAck,
-            Collections.singletonMap("x-stream-offset", "first"),
+            Collections.singletonMap("x-stream-offset", consumeOffset),
             (consTag, msg) -> {
               consume.accept(msg);
               long deliveryTag = msg.getEnvelope().getDeliveryTag();

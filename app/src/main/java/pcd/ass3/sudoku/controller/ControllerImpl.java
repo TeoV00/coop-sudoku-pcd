@@ -17,14 +17,13 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     private final DataDistributor dataDistributor;
     private UpdateObserver observer;
-    private Optional<String> boardNameJoined;
     private Optional<BoardInfo> boardInfoJoined;
+    private Optional<int[][]> localRiddle;
     private Optional<String> nickname;
     private Optional<String> userHexColor;
 
     public ControllerImpl(DataDistributor dataDistributor) {
       this.dataDistributor = dataDistributor;
-      this.boardNameJoined = Optional.empty();
       this.nickname = Optional.empty();
       this.userHexColor = Optional.empty();
       this.dataDistributor.init(this);
@@ -44,7 +43,8 @@ public class ControllerImpl implements Controller, SharedDataListener {
     @Override
     public void boardUpdate(DataDistributor.JsonData jsonData) {
         var edits = Domain.CellUpdate.fromJson(jsonData.getJsonString());
-        cacheEdits(edits);
+        //fix
+        //cacheEdits(edits);
         observer.cellUpdate(edits);
     }
 
@@ -52,15 +52,16 @@ public class ControllerImpl implements Controller, SharedDataListener {
      * Update local copy of boardInfo's riddle with users edits/attempts
      */
     private void cacheEdits(CellUpdate edits) {
-      boardInfoJoined.ifPresent((boardInfo) -> {
+      if (localRiddle.isPresent()) {
+        var updatedRiddle = localRiddle.get();
         Pos p = edits.cellPos();
-        boardInfo.riddle()[p.row()][p.col()] = edits.cellValue();
-      });
+        updatedRiddle[p.row()][p.col()] = edits.cellValue();
+        this.localRiddle = Optional.of(updatedRiddle);
+      }
     }
 
     @Override
     public void cursorsUpdate(DataDistributor.JsonData cursor) {
-        System.out.println(cursor.getJsonString());
         var userInfo = Domain.UserInfo.fromJson(cursor.getJsonString());
         observer.cursorsUpdate(userInfo);
     }
@@ -76,7 +77,10 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public void boardLeft(Boolean hasLeft) {
-      this.boardNameJoined = hasLeft ? Optional.empty() : boardNameJoined;
+      if (hasLeft) {
+          this.boardInfoJoined = Optional.empty();
+          this.localRiddle = Optional.empty();
+      }
       observer.boardLeft(hasLeft);
     }
 
@@ -109,15 +113,10 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public List<BoardInfo> getPublishedBoards() {
-
-      var list = this.dataDistributor.existingBoards()
+      return this.dataDistributor.existingBoards()
                                  .stream()
                                  .map(d -> BoardInfo.fromJson(d.getJsonString()))
                                  .toList();
-
-      list.forEach(i -> System.out.println(i));
-
-      return list;
     }
 
     @Override
@@ -155,20 +154,24 @@ public class ControllerImpl implements Controller, SharedDataListener {
     @Override
     public void leaveBoard() {
       this.dataDistributor.unsubscribe();
+      this.boardInfoJoined = Optional.empty();
+      this.localRiddle = Optional.empty();
     }
 
     @Override
     public void joinToBoard(String boardName) {
-      this.boardNameJoined = Optional.of(boardName);
       boardInfoOf(boardName).ifPresent(info -> {
-        observer.joined(info);
         this.boardInfoJoined = Optional.of(info);
-      });   
+        
+        this.localRiddle = Optional.of(info.riddle().clone());
+        //fix: it seems that riddle has user edits only if i call method cacheEdits()
+        observer.joined(info);
+      });
     }
 
     @Override
     public void boardLoaded() {
-      this.boardNameJoined.ifPresent(name -> this.dataDistributor.subscribe(name));
+      this.boardInfoJoined.ifPresent(info -> this.dataDistributor.subscribe(info.name()));
     }
 
     @Override

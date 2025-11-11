@@ -84,12 +84,12 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
         
         gamePanel.add(gridContainer, BorderLayout.CENTER);
         
-        // Pannello con i numeri 1-9 + pulsante cancella
+        // Number panel
         JPanel numberPanel = createNumberPanel();
         gamePanel.add(numberPanel, BorderLayout.SOUTH);
         this.add(gamePanel, BorderLayout.CENTER);
         
-        // Pannello bottom con pulsante LEAVE
+        // bottom panel with LEAVE button
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(Color.WHITE);
         bottomPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
@@ -113,7 +113,6 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
           "Leave Board", 
           JOptionPane.YES_NO_OPTION);
       if (confirm == JOptionPane.YES_OPTION) {
-          // Logica per lasciare la board
             controller.leaveBoard();
       }
     }
@@ -161,7 +160,7 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
             selectedCell.y().setText(String.valueOf(number));
             controller.setCellValue(selectedCell.x(), number);
         } else {
-            JOptionPane.showMessageDialog(this, "Seleziona prima una cella!");
+            JOptionPane.showMessageDialog(this, "No cell selected!");
         }
     }
     
@@ -170,7 +169,7 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
             selectedCell.y().setText("");
             controller.setCellValue(selectedCell.x(), 0);
         } else {
-            JOptionPane.showMessageDialog(this, "Seleziona prima una cella!");
+            JOptionPane.showMessageDialog(this, "No cell selected!");
         }
     }
 
@@ -182,7 +181,6 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
 
     @Override
     public void cellUpdate(CellUpdate edits) {
-        System.out.println("recv edits: "+ edits );
         Pos pos = edits.cellPos();
         String stringValue = edits.cellValue() == 0 ? "" : String.valueOf(edits.cellValue());
         cells[pos.row()][pos.col()].setText(stringValue);
