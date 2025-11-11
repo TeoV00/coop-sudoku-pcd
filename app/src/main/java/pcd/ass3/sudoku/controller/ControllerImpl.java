@@ -42,9 +42,20 @@ public class ControllerImpl implements Controller, SharedDataListener {
     }
 
     @Override
-    public void boardUpdate(DataDistributor.JsonData edits) {
-        var cellUpdates = Domain.CellUpdate.fromJson(edits.getJsonString());
-        observer.cellUpdate(cellUpdates);
+    public void boardUpdate(DataDistributor.JsonData jsonData) {
+        var edits = Domain.CellUpdate.fromJson(jsonData.getJsonString());
+        cacheEdits(edits);
+        observer.cellUpdate(edits);
+    }
+
+    /**
+     * Update local copy of boardInfo's riddle with users edits/attempts
+     */
+    private void cacheEdits(CellUpdate edits) {
+      boardInfoJoined.ifPresent((boardInfo) -> {
+        Pos p = edits.cellPos();
+        boardInfo.riddle()[p.row()][p.col()] = Integer.parseInt(edits.cellValue());
+      });
     }
 
     @Override
@@ -89,7 +100,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
           this.observer.notifyError("valore errato", Optional.empty());
         }
       }
-      
+
       DataDistributor.JsonData jsonData = () -> {
         return (new CellUpdate(cellPos, value)).toJson();
       };
