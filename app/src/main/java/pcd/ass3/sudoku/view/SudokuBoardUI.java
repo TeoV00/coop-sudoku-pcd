@@ -12,7 +12,6 @@ import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -51,19 +50,6 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         setSize(1200, 800);
         setLocationRelativeTo(null);
 
-        // Prompt for nickname
-        String nickname = null;
-        while (nickname == null || nickname.trim().isEmpty()) {
-            nickname = JOptionPane.showInputDialog(this, "Enter your nickname:");
-            if (nickname == null) System.exit(0); // User cancelled
-        }
-
-        // Prompt for color selection
-        Color selectedColor = JColorChooser.showDialog(this, "Select your color", Color.BLUE);
-        if (selectedColor == null) selectedColor = Color.BLUE; // Default if cancelled
-
-        controller.setUser(nickname, ViewUtilities.hexColor(selectedColor));
-
         setLayout(new BorderLayout());
         JPanel sidebarPanel = createSidebarPanel();
         add(sidebarPanel, BorderLayout.WEST);
@@ -71,7 +57,15 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         this.centralPanel = new NoBoardPanel();
         add(centralPanel, BorderLayout.CENTER);
 
-        setVisible(true);
+        setVisible(false);
+
+        var usrSets = new UserConfigUI(controller, () -> {
+            this.setVisible(true);
+        });
+        usrSets.setLocationRelativeTo(this);
+        usrSets.setAlwaysOnTop(true);
+        usrSets.setVisible(true);
+
     }
 
     private void updateSubViews(Consumer<UpdateObserver> fun) {
