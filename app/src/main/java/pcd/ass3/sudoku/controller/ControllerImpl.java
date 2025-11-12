@@ -11,6 +11,7 @@ import pcd.ass3.sudoku.domain.SudokuBoard;
 import pcd.ass3.sudoku.domain.SudokuGenerator;
 import pcd.ass3.sudoku.mom.DataDistributor;
 import pcd.ass3.sudoku.mom.SharedDataListener;
+import static pcd.ass3.sudoku.utils.ArrayUtils.arrayToString;
 import pcd.ass3.sudoku.view.UpdateObserver;
 
 public class ControllerImpl implements Controller, SharedDataListener {
@@ -18,7 +19,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
     private final DataDistributor dataDistributor;
     private UpdateObserver observer;
     private Optional<BoardInfo> boardInfoJoined;
-    private Optional<int[][]> localRiddle;
+    private int[][] localSolution;
     private Optional<String> nickname;
     private Optional<String> userHexColor;
 
@@ -43,8 +44,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
     @Override
     public void boardUpdate(DataDistributor.JsonData jsonData) {
         var edits = Domain.CellUpdate.fromJson(jsonData.getJsonString());
-        //fix
-        //cacheEdits(edits);
+        cacheEdits(edits);
         observer.cellUpdate(edits);
     }
 
@@ -52,11 +52,14 @@ public class ControllerImpl implements Controller, SharedDataListener {
      * Update local copy of boardInfo's riddle with users edits/attempts
      */
     private void cacheEdits(CellUpdate edits) {
-      if (localRiddle.isPresent()) {
-        var updatedRiddle = localRiddle.get();
-        Pos p = edits.cellPos();
-        updatedRiddle[p.row()][p.col()] = edits.cellValue();
-        this.localRiddle = Optional.of(updatedRiddle);
+      if (localSolution != null) {
+        var cellPos = edits.cellPos();
+        var value = edits.cellValue();
+        localSolution[cellPos.row()][cellPos.col()] = value;
+        System.out.println("Board Info");
+        this.boardInfoJoined.ifPresent(bi -> System.out.println(bi));
+        System.out.println("Local solution");
+        System.out.println(arrayToString(this.localSolution));
       }
     }
 
@@ -79,7 +82,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
     public void boardLeft(Boolean hasLeft) {
       if (hasLeft) {
           this.boardInfoJoined = Optional.empty();
-          this.localRiddle = Optional.empty();
+          this.localSolution = null;
       }
       observer.boardLeft(hasLeft);
     }
@@ -155,16 +158,13 @@ public class ControllerImpl implements Controller, SharedDataListener {
     public void leaveBoard() {
       this.dataDistributor.unsubscribe();
       this.boardInfoJoined = Optional.empty();
-      this.localRiddle = Optional.empty();
     }
 
     @Override
     public void joinToBoard(String boardName) {
       boardInfoOf(boardName).ifPresent(info -> {
         this.boardInfoJoined = Optional.of(info);
-        
-        this.localRiddle = Optional.of(info.riddle().clone());
-        //fix: it seems that riddle has user edits only if i call method cacheEdits()
+        this.localSolution = info.riddle();
         observer.joined(info);
       });
     }

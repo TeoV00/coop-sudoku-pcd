@@ -3,6 +3,9 @@ package pcd.ass3.sudoku.domain;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import static pcd.ass3.sudoku.utils.ArrayUtils.arrayToString;
+import static pcd.ass3.sudoku.utils.ArrayUtils.deepCopy;
+
 public interface Domain {
     Gson gson = new GsonBuilder().create();
 
@@ -44,6 +47,27 @@ public interface Domain {
         }
         public static BoardInfo fromJson(String json) {
         return gson.fromJson(json, BoardInfo.class);
+        }
+
+        @Override
+        public String toString() {
+            return "createdBy: " + createdBy() + "\n" +
+            "name: " + name() + "\n"+
+            "riddle: " + "\n" +
+            arrayToString(riddle()) + "\n" +
+            "solution: " + "\n" +
+            arrayToString(solution());
+        }
+
+        @Override
+        public int[][] solution() {
+            // return copy
+            return deepCopy(this.solution);
+        }
+
+        @Override
+        public int[][] riddle() {
+            return deepCopy(this.riddle);
         }
     }
 }
