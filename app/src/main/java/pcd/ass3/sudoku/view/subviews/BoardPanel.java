@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -27,13 +26,12 @@ import pcd.ass3.sudoku.domain.Domain.UserInfo;
 import pcd.ass3.sudoku.domain.Pos;
 import pcd.ass3.sudoku.utils.Pair;
 import pcd.ass3.sudoku.view.UpdateObserver;
-import static pcd.ass3.sudoku.view.ViewUtilities.makeBorder;
 
 
 public final class BoardPanel extends JPanel implements UpdateObserver {
 
     private final JPanel gridPanel;
-    private final JButton[][] cells;
+    private final CellButton[][] cells;
     private Pair<Pos, JButton> selectedCell = null;
     private final Map<String, Pair<Pos, Color>> usersCursors;
     private final Controller controller;
@@ -45,27 +43,21 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
         this.setBorder(new EmptyBorder(20, 20, 20, 20));
         this.setBackground(Color.WHITE);
         
-        // Titolo board
         JLabel boardNameLabel = new JLabel(boardName, SwingConstants.CENTER);
         boardNameLabel.setFont(new Font("Arial", Font.BOLD, 24));
         boardNameLabel.setBorder(new EmptyBorder(10, 0, 20, 0));
         this.add(boardNameLabel, BorderLayout.NORTH);
         
-        // Contenitore per griglia e controlli
         JPanel gamePanel = new JPanel(new BorderLayout());
         gamePanel.setBackground(Color.WHITE);
         
-        // Griglia Sudoku 9x9
         gridPanel = new JPanel(new GridLayout(size, size));
         gridPanel.setPreferredSize(new Dimension(500, 500));
-        cells = new JButton[size][size];
+        cells = new CellButton[size][size];
         
         for (int row = 0; row < size; row++) {
             for (int col = 0; col < size; col++) {
-                JButton cell = new JButton("");
-                cell.setFont(new Font("Arial", Font.BOLD, 20));
-                cell.setFocusPainted(false);                
-                cell.setBorder(makeBorder(row, col));
+                CellButton cell = new CellButton("", row, col);          
                 
                 final int cellRow = row;
                 final int cellCol = col;
@@ -191,14 +183,15 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
         // reset old cell border
         if (usersCursors.containsKey(cursor.nickname())) {
             var oldPos = usersCursors.get(cursor.nickname()).x();
-            cells[oldPos.row()][oldPos.col()].setBorder(makeBorder(oldPos.row(), oldPos.col()));
+            var cell = cells[oldPos.row()][oldPos.col()];
+            cell.unselect();
         }
         // set new cell boarder
         Color usrColor = Color.decode(cursor.hexColor());
         Pos pos = cursor.cursorPos();
         usersCursors.put(cursor.nickname(), new Pair<>(pos, usrColor));
         var cell = cells[pos.row()][pos.col()];
-        cell.setBorder(BorderFactory.createMatteBorder(3, 3, 3, 3, usrColor));
+        cell.selected(cursor.nickname(), usrColor);
     }
 
     @Override
