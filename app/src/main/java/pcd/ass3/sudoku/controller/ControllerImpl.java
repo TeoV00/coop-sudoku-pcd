@@ -28,7 +28,6 @@ public class ControllerImpl implements Controller, DataDistributorListener {
         this.dataDistributor = dataDistributor;
         this.nickname = Optional.empty();
         this.userHexColor = Optional.empty();
-        this.dataDistributor.init(this);
         this.isSolved = false;
     }
 
@@ -85,6 +84,7 @@ public class ControllerImpl implements Controller, DataDistributorListener {
         if (exc != null) {
             descr = Optional.ofNullable(exc.getMessage());
         }
+        System.out.println(errMsg);
         observer.notifyError(errMsg, descr);
     }
 

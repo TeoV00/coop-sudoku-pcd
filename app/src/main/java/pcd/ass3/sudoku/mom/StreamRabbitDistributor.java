@@ -16,7 +16,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Delivery;
 
-public class StreamRabbitDistributor implements DataDistributor {
+public class StreamRabbitDistributor implements DataDistributor, ConfigurableDistributor {
 
     private record QueueConfigs(
         boolean durable, 
@@ -33,7 +33,7 @@ public class StreamRabbitDistributor implements DataDistributor {
     private final static String FIRST_STREAM_OFFSET = "first";
     private final String initial_cursors_offset = "last";
 
-    private final Optional<String> rabbitHost = Optional.empty();
+    private Optional<String> rabbitHost = Optional.empty();
     private DataDistributorListener updateListener;
     private Optional<String> boardName;
     private Optional<Channel> channel;
@@ -47,6 +47,11 @@ public class StreamRabbitDistributor implements DataDistributor {
         this.channel = createChannel();
         this.consumerTag = new HashMap<>();
         initBoardRegistry();
+    }
+
+    @Override
+    public void setHost(String host) {
+        this.rabbitHost = Optional.of(host);
     }
 
     private void initBoardRegistry() {
