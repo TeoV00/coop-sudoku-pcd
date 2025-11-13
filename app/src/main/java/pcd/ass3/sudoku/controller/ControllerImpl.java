@@ -11,10 +11,10 @@ import pcd.ass3.sudoku.domain.Pos;
 import pcd.ass3.sudoku.domain.SudokuBoard;
 import pcd.ass3.sudoku.domain.SudokuGenerator;
 import pcd.ass3.sudoku.mom.DataDistributor;
-import pcd.ass3.sudoku.mom.SharedDataListener;
+import pcd.ass3.sudoku.mom.DataDistributorListener;
 import pcd.ass3.sudoku.view.UpdateObserver;
 
-public class ControllerImpl implements Controller, SharedDataListener {
+public class ControllerImpl implements Controller, DataDistributorListener {
 
     private final DataDistributor dataDistributor;
     private UpdateObserver observer;
@@ -105,7 +105,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
     }
 
     @Override
-    public void newBoardCreated(DataDistributor.JsonData data) {
+    public void boardRegistered(DataDistributor.JsonData data) {
       var boardData = BoardInfo.fromJson(data.getJsonString());
       observer.newBoardCreated(boardData.name());
     }

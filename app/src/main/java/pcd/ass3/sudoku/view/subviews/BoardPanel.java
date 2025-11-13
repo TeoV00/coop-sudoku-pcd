@@ -32,7 +32,7 @@ import pcd.ass3.sudoku.view.UpdateObserver;
 public final class BoardPanel extends JPanel implements UpdateObserver {
 
     private final JPanel gridPanel;
-    private final JLabel boardNameLabel;
+    private JLabel boardNameLabel;
     private final CellButton[][] cells;
     private Pair<Pos, JButton> selectedCell = null;
     private final Map<String, Pair<Pos, Color>> usersCursors;
