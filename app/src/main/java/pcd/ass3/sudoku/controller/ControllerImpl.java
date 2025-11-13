@@ -1,5 +1,6 @@
 package pcd.ass3.sudoku.controller;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,7 +12,6 @@ import pcd.ass3.sudoku.domain.SudokuBoard;
 import pcd.ass3.sudoku.domain.SudokuGenerator;
 import pcd.ass3.sudoku.mom.DataDistributor;
 import pcd.ass3.sudoku.mom.SharedDataListener;
-import static pcd.ass3.sudoku.utils.ArrayUtils.arrayToString;
 import pcd.ass3.sudoku.view.UpdateObserver;
 
 public class ControllerImpl implements Controller, SharedDataListener {
@@ -20,6 +20,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
     private UpdateObserver observer;
     private Optional<BoardInfo> boardInfoJoined;
     private int[][] localSolution;
+    private boolean isSolved;
     private Optional<String> nickname;
     private Optional<String> userHexColor;
 
@@ -28,6 +29,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
       this.nickname = Optional.empty();
       this.userHexColor = Optional.empty();
       this.dataDistributor.init(this);
+      this.isSolved = false;
     }
 
     @Override
@@ -43,9 +45,23 @@ public class ControllerImpl implements Controller, SharedDataListener {
 
     @Override
     public void boardUpdate(DataDistributor.JsonData jsonData) {
+      if (!this.isSolved) {
         var edits = Domain.CellUpdate.fromJson(jsonData.getJsonString());
         cacheEdits(edits);
+        checkBoardSolution();
         observer.cellUpdate(edits);
+      }
+    }
+
+    private void checkBoardSolution() {
+      this.isSolved = this.boardInfoJoined.map(info -> 
+          Arrays.deepEquals(localSolution, info.solution())
+        ).orElse(false);
+
+      if (isSolved) {
+          observer.boardSolved();
+          this.isSolved = true;
+      }
     }
 
     /**
@@ -56,10 +72,10 @@ public class ControllerImpl implements Controller, SharedDataListener {
         var cellPos = edits.cellPos();
         var value = edits.cellValue();
         localSolution[cellPos.row()][cellPos.col()] = value;
-        System.out.println("Board Info");
-        this.boardInfoJoined.ifPresent(bi -> System.out.println(bi));
-        System.out.println("Local solution");
-        System.out.println(arrayToString(this.localSolution));
+        // System.out.println("Board Info");
+        // this.boardInfoJoined.ifPresent(bi -> System.out.println(bi));
+        // System.out.println("Local solution");
+        // System.out.println(arrayToString(this.localSolution));
       }
     }
 
@@ -83,6 +99,7 @@ public class ControllerImpl implements Controller, SharedDataListener {
       if (hasLeft) {
           this.boardInfoJoined = Optional.empty();
           this.localSolution = null;
+          this.isSolved = false;
       }
       observer.boardLeft(hasLeft);
     }

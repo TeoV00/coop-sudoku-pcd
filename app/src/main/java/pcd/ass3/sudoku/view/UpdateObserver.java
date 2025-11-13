@@ -10,4 +10,5 @@ public interface UpdateObserver extends ErrorListener {
   public void cursorsUpdate(UserInfo cursor);
   public void boardLeft(Boolean hasLeft);
   public void newBoardCreated(String name);
+  public void boardSolved();
 }

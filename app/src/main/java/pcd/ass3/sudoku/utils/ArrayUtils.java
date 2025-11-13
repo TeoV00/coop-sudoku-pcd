@@ -16,13 +16,13 @@ public class ArrayUtils {
     }
 
     public static int[][] deepCopy(int[][] original) {
-            if (original == null) {
-                return null;
-            }
-            int[][] copy = new int[original.length][];
-            for (int i = 0; i < original.length; i++) {
-                copy[i] = original[i].clone(); // clones inner arrays individually
-            }
-            return copy;
+        if (original == null) {
+            return null;
         }
+        int[][] copy = new int[original.length][];
+        for (int i = 0; i < original.length; i++) {
+            copy[i] = original[i].clone(); // clones inner arrays individually
+        }
+        return copy;
+    }
 }

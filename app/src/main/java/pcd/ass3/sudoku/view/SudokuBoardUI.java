@@ -77,7 +77,6 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         sidebar.setPreferredSize(new Dimension(200, getHeight()));
         sidebar.setBorder(new EmptyBorder(10, 10, 10, 10));
         
-        // Pannello superiore con "BOARDS" e pulsante "+"
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Color.BLACK));
         
@@ -92,14 +91,8 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         
         headerPanel.add(boardsLabel, BorderLayout.CENTER);
         headerPanel.add(addButton, BorderLayout.EAST);
-        
 
         boardListModel = new DefaultListModel<>();
-        //boardListModel.clear();
-        // for (BoardInfo boardInfo : controller.getPublishedBoards()) {
-        //     boardListModel.addElement(boardInfo.name());
-        // }
-      
         boardList = new JList<>(boardListModel);
         boardList.setFont(new Font("Arial", Font.PLAIN, 14));
         boardList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -205,6 +198,14 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
         SwingUtilities.invokeLater(() -> {
             doRun.run();
             validate();
+        });
+    }
+
+    @Override
+    public void boardSolved() {
+        runAndValidate(() -> {
+            JOptionPane.showMessageDialog(this, "Board solved !!");
+            updateSubViews(v -> v.boardSolved());
         });
     }
     

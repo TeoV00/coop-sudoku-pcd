@@ -11,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -165,11 +166,11 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
         }
     }
 
-/*** HERE RECEIVED UPDATE FROM CONTROLLER 
- * CALLS VIEW UPDATES USING INVOKELATER SWING UTILS
- * 
- * 
- */
+    /*** HERE RECEIVED UPDATE FROM CONTROLLER 
+     * CALLS VIEW UPDATES USING INVOKELATER SWING UTILS
+     * 
+     * 
+     */
 
     @Override
     public void cellUpdate(CellUpdate edits) {
@@ -209,19 +210,30 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
     @Override
     public void joined(BoardInfo boardInfo) {
         int[][] riddle = boardInfo.riddle();
-        int rows = riddle.length;
-        int cols = riddle[0].length;
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < cols; c++) {
-                int value = riddle[r][c];
-                if (value != 0) {
-                    JButton cell = cells[r][c];
-                    cell.setText( String.valueOf(value));
-                    cell.setEnabled(false); 
-                }
+
+        performOnEach(cells, d -> {
+            int value = riddle[d.y().x()][d.y().y()];
+            if (value != 0) {
+                d.x().setText( String.valueOf(value));
+                d.x().setEnabled(false); 
             }
-        }
+        });
         this.controller.boardLoaded();
+    }
+
+    @Override
+    public void boardSolved() {
+        performOnEach(cells, c -> c.x().setEnabled(false));
+    }
+
+    private <T> void performOnEach(T[][] arr, Consumer<Pair<T, Pair<Integer, Integer>>> consume) {
+        int rows = arr.length;
+        int cols = arr[0].length;
+        for (int r = 0; r < rows; r++) {
+           for (int c = 0; c < cols; c++) {
+                consume.accept(new Pair(arr[r][c], new Pair<>(r, c)));
+           } 
+        }
     }
     
 }
