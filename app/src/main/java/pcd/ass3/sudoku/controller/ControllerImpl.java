@@ -25,11 +25,11 @@ public class ControllerImpl implements Controller, DataDistributorListener {
     private Optional<String> userHexColor;
 
     public ControllerImpl(DataDistributor dataDistributor) {
-      this.dataDistributor = dataDistributor;
-      this.nickname = Optional.empty();
-      this.userHexColor = Optional.empty();
-      this.dataDistributor.init(this);
-      this.isSolved = false;
+        this.dataDistributor = dataDistributor;
+        this.nickname = Optional.empty();
+        this.userHexColor = Optional.empty();
+        this.dataDistributor.init(this);
+        this.isSolved = false;
     }
 
     @Override
@@ -40,43 +40,43 @@ public class ControllerImpl implements Controller, DataDistributorListener {
 
     @Override
     public void joined() {
-      // joined the stream of user updates
+        // joined the stream of user updates
     }
 
     @Override
     public void boardUpdate(DataDistributor.JsonData jsonData) {
-      if (!this.isSolved) {
-        var edits = Domain.CellUpdate.fromJson(jsonData.getJsonString());
-        cacheEdits(edits);
-        checkBoardSolution();
-        observer.cellUpdate(edits);
-      }
+        if (!this.isSolved) {
+            var edits = Domain.CellUpdate.fromJson(jsonData.getJsonString());
+            cacheEdits(edits);
+            checkBoardSolution();
+            observer.cellUpdate(edits);
+        }
     }
 
     private void checkBoardSolution() {
-      this.isSolved = this.boardInfoJoined.map(info -> 
-          Arrays.deepEquals(localSolution, info.solution())
-        ).orElse(false);
+        this.isSolved = this.boardInfoJoined
+            .map(info -> Arrays.deepEquals(localSolution, info.solution()))
+            .orElse(false);
 
-      if (isSolved) {
-          observer.boardSolved();
-          this.isSolved = true;
-      }
+        if (isSolved) {
+            observer.boardSolved();
+            this.isSolved = true;
+        }
     }
 
     /**
      * Update local copy of boardInfo's riddle with users edits/attempts
      */
     private void cacheEdits(CellUpdate edits) {
-      if (localSolution != null) {
-        var cellPos = edits.cellPos();
-        var value = edits.cellValue();
-        localSolution[cellPos.row()][cellPos.col()] = value;
-        // System.out.println("Board Info");
-        // this.boardInfoJoined.ifPresent(bi -> System.out.println(bi));
-        // System.out.println("Local solution");
-        // System.out.println(arrayToString(this.localSolution));
-      }
+        if (localSolution != null) {
+            var cellPos = edits.cellPos();
+            var value = edits.cellValue();
+            localSolution[cellPos.row()][cellPos.col()] = value;
+            // System.out.println("Board Info");
+            // this.boardInfoJoined.ifPresent(bi -> System.out.println(bi));
+            // System.out.println("Local solution");
+            // System.out.println(arrayToString(this.localSolution));
+        }
     }
 
     @Override
@@ -87,27 +87,27 @@ public class ControllerImpl implements Controller, DataDistributorListener {
 
     @Override
     public void notifyErrors(String errMsg, Exception exc) {
-      Optional<String> descr = Optional.empty();
-      if (exc != null) {
-        descr = Optional.ofNullable(exc.getMessage());
-      }
-      observer.notifyError(errMsg, descr);
+        Optional<String> descr = Optional.empty();
+        if (exc != null) {
+            descr = Optional.ofNullable(exc.getMessage());
+        }
+        observer.notifyError(errMsg, descr);
     }
 
     @Override
     public void boardLeft(Boolean hasLeft) {
-      if (hasLeft) {
-          this.boardInfoJoined = Optional.empty();
-          this.localSolution = null;
-          this.isSolved = false;
-      }
-      observer.boardLeft(hasLeft);
+        if (hasLeft) {
+            this.boardInfoJoined = Optional.empty();
+            this.localSolution = null;
+            this.isSolved = false;
+        }
+        observer.boardLeft(hasLeft);
     }
 
     @Override
     public void boardRegistered(DataDistributor.JsonData data) {
-      var boardData = BoardInfo.fromJson(data.getJsonString());
-      observer.newBoardCreated(boardData.name());
+        var boardData = BoardInfo.fromJson(data.getJsonString());
+        observer.newBoardCreated(boardData.name());
     }
 
     /** 
@@ -116,46 +116,50 @@ public class ControllerImpl implements Controller, DataDistributorListener {
 
     @Override
     public void setCellValue(Pos cellPos, int value) {
-      // if (this.boardInfoJoined.isPresent()) {
-      //   var board = this.boardInfoJoined.get();
-      //   var sol = board.solution();
-      //   if (sol[cellPos.row()][cellPos.col()] != Integer.parseInt(value)) {
-      //     System.out.println("valore errato");
-      //     this.observer.notifyError("valore errato", Optional.empty());
-      //   }
-      // }
+        // if (this.boardInfoJoined.isPresent()) {
+        //   var board = this.boardInfoJoined.get();
+        //   var sol = board.solution();
+        //   if (sol[cellPos.row()][cellPos.col()] != Integer.parseInt(value)) {
+        //     System.out.println("valore errato");
+        //     this.observer.notifyError("valore errato", Optional.empty());
+        //   }
+        // }
 
-      DataDistributor.JsonData jsonData = () -> {
-        return (new CellUpdate(cellPos, value)).toJson();
-      };
-      this.dataDistributor.shareUpdate(jsonData);
+        DataDistributor.JsonData jsonData = () -> {
+            return (new CellUpdate(cellPos, value)).toJson();
+        };
+        this.dataDistributor.shareUpdate(jsonData);
     }
 
     @Override
     public List<BoardInfo> getPublishedBoards() {
-      return this.dataDistributor.existingBoards()
-                                 .stream()
-                                 .map(d -> BoardInfo.fromJson(d.getJsonString()))
-                                 .toList();
+        return this.dataDistributor.existingBoards()
+                                    .stream()
+                                    .map(d -> BoardInfo.fromJson(d.getJsonString()))
+                                    .toList();
     }
 
     @Override
     public void createNewBoard(String name, int size) {
-      if (boardInfoOf(name).isEmpty()) {
-        SudokuBoard boards = SudokuGenerator.generate();
-        DataDistributor.JsonData jsonData = () -> {
-              return new BoardInfo(boards.riddle(), boards.complete(), this.nickname.orElse("unknown"), name).toJson();
-          };
-        this.dataDistributor.registerBoard(jsonData);
-      } else {
-        this.observer.notifyError("Board called " + name + " already exists", Optional.empty());
-      }
+        if (boardInfoOf(name).isEmpty()) {
+            SudokuBoard boards = SudokuGenerator.generate();
+            DataDistributor.JsonData jsonData = () -> {
+                return new BoardInfo(
+                    boards.riddle(), 
+                    boards.complete(), 
+                    this.nickname.orElse("unknown"), 
+                    name).toJson();
+            };
+            this.dataDistributor.registerBoard(jsonData);
+        } else {
+            this.observer.notifyError("Board called " + name + " already exists", Optional.empty());
+        }
     }
 
     private Optional<BoardInfo> boardInfoOf(String name) {
-      return this.getPublishedBoards().stream()
-                                      .filter(i -> i.name().equals(name))
-                                      .findFirst();  
+        return this.getPublishedBoards().stream()
+                                        .filter(i -> i.name().equals(name))
+                                        .findFirst();  
     }
 
     @Override
@@ -173,29 +177,27 @@ public class ControllerImpl implements Controller, DataDistributorListener {
 
     @Override
     public void leaveBoard() {
-      this.dataDistributor.unsubscribe();
-      this.boardInfoJoined = Optional.empty();
+        this.dataDistributor.unsubscribe();
+        this.boardInfoJoined = Optional.empty();
     }
 
     @Override
     public void joinToBoard(String boardName) {
-      boardInfoOf(boardName).ifPresent(info -> {
-        this.boardInfoJoined = Optional.of(info);
-        this.localSolution = info.riddle();
-        observer.joined(info);
-      });
+        boardInfoOf(boardName).ifPresent(info -> {
+            this.boardInfoJoined = Optional.of(info);
+            this.localSolution = info.riddle();
+            observer.joined(info);
+        });
     }
 
     @Override
     public void boardLoaded() {
-      this.boardInfoJoined.ifPresent(info -> this.dataDistributor.subscribe(info.name()));
+        this.boardInfoJoined.ifPresent(info -> this.dataDistributor.subscribe(info.name()));
     }
 
     @Override
     public void setObserver(UpdateObserver observer) {
         this.observer = observer;
     }
-
-   
 
 }

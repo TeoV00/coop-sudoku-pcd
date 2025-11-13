@@ -61,7 +61,6 @@ public interface Domain {
 
         @Override
         public int[][] solution() {
-            // return copy
             return deepCopy(this.solution);
         }
 
