@@ -39,9 +39,7 @@ public class ControllerImpl implements Controller, DataDistributorListener {
     }
 
     @Override
-    public void joined() {
-        // joined the stream of user updates
-    }
+    public void joined() {}
 
     @Override
     public void boardUpdate(DataDistributor.JsonData jsonData) {
@@ -72,10 +70,6 @@ public class ControllerImpl implements Controller, DataDistributorListener {
             var cellPos = edits.cellPos();
             var value = edits.cellValue();
             localSolution[cellPos.row()][cellPos.col()] = value;
-            // System.out.println("Board Info");
-            // this.boardInfoJoined.ifPresent(bi -> System.out.println(bi));
-            // System.out.println("Local solution");
-            // System.out.println(arrayToString(this.localSolution));
         }
     }
 
@@ -116,14 +110,6 @@ public class ControllerImpl implements Controller, DataDistributorListener {
 
     @Override
     public void setCellValue(Pos cellPos, int value) {
-        // if (this.boardInfoJoined.isPresent()) {
-        //   var board = this.boardInfoJoined.get();
-        //   var sol = board.solution();
-        //   if (sol[cellPos.row()][cellPos.col()] != Integer.parseInt(value)) {
-        //     System.out.println("valore errato");
-        //     this.observer.notifyError("valore errato", Optional.empty());
-        //   }
-        // }
 
         DataDistributor.JsonData jsonData = () -> {
             return (new CellUpdate(cellPos, value)).toJson();
