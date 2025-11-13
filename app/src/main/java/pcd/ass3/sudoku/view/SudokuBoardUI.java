@@ -208,6 +208,5 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
             updateSubViews(v -> v.boardSolved());
         });
     }
-    
 }
 

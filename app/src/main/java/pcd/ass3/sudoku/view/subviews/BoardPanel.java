@@ -32,6 +32,7 @@ import pcd.ass3.sudoku.view.UpdateObserver;
 public final class BoardPanel extends JPanel implements UpdateObserver {
 
     private final JPanel gridPanel;
+    private final JLabel boardNameLabel;
     private final CellButton[][] cells;
     private Pair<Pos, JButton> selectedCell = null;
     private final Map<String, Pair<Pos, Color>> usersCursors;
@@ -44,10 +45,10 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
         this.setBorder(new EmptyBorder(20, 20, 20, 20));
         this.setBackground(Color.WHITE);
         
-        JLabel boardNameLabel = new JLabel(boardName, SwingConstants.CENTER);
-        boardNameLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        boardNameLabel.setBorder(new EmptyBorder(10, 0, 20, 0));
-        this.add(boardNameLabel, BorderLayout.NORTH);
+        this.boardNameLabel = new JLabel(boardName, SwingConstants.CENTER);
+        this.boardNameLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        this.boardNameLabel.setBorder(new EmptyBorder(10, 0, 20, 0));
+        this.add(this.boardNameLabel, BorderLayout.NORTH);
         
         JPanel gamePanel = new JPanel(new BorderLayout());
         gamePanel.setBackground(Color.WHITE);
@@ -224,6 +225,7 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
     @Override
     public void boardSolved() {
         performOnEach(cells, c -> c.x().setEnabled(false));
+        this.boardNameLabel.setText(boardNameLabel.getText() + " - SOLVED");
     }
 
     private <T> void performOnEach(T[][] arr, Consumer<Pair<T, Pair<Integer, Integer>>> consume) {

@@ -6,7 +6,6 @@ public interface DataDistributor {
 
   public interface JsonData {
     String getJsonString();
-    //TODO: here i could carry/need other info about message
   }
 
   void init(SharedDataListener controller);
