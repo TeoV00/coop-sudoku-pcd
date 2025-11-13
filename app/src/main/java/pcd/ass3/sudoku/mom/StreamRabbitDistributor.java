@@ -33,6 +33,7 @@ public class StreamRabbitDistributor implements DataDistributor {
     private final static String FIRST_STREAM_OFFSET = "first";
     private final String initial_cursors_offset = "last";
 
+    private Optional<String> rabbitHost;
     private DataDistributorListener updateListener;
     private Optional<String> boardName;
     private Optional<Channel> channel;
@@ -67,7 +68,7 @@ public class StreamRabbitDistributor implements DataDistributor {
 
     private Optional<Channel> createChannel()  {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("localhost");
+        factory.setHost(this.rabbitHost.orElse("localhost"));
         Optional<Channel> optChannel = Optional.empty();
         try {
             optChannel = factory.newConnection().openChannel();
