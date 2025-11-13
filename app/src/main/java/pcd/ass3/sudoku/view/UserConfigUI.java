@@ -31,26 +31,22 @@ import pcd.ass3.sudoku.controller.Controller;
         this.color = Optional.empty();
         this.controller = controller;
         setTitle("User Configuration");
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        // Container principale con BoxLayout verticale
         JPanel mainPanel = new JPanel();
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-        // Campo nickname: Label sopra TextField
         JLabel nickLabel = new JLabel("Nickname");
         nickLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         JTextField nicknameField = new JTextField(15);
         nicknameField.setMaximumSize(new Dimension(Integer.MAX_VALUE - 50, nicknameField.getPreferredSize().height));
 
-        // Spazio verticale
         mainPanel.add(nickLabel);
         mainPanel.add(Box.createVerticalStrut(5));
         mainPanel.add(nicknameField);
         mainPanel.add(Box.createVerticalStrut(15));
 
-        // Label per il colore
         JLabel colorLabel = new JLabel("Cursor Color");
         colorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         mainPanel.add(colorLabel);
@@ -66,7 +62,6 @@ import pcd.ass3.sudoku.controller.Controller;
         mainPanel.add(colorChooser);
         mainPanel.add(Box.createVerticalStrut(15));
 
-        // Pulsante OK centrato
         JButton okButton = new JButton("OK");
         okButton.setEnabled(false);
         okButton.setAlignmentX(Component.CENTER_ALIGNMENT);

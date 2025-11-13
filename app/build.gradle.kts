@@ -1,6 +1,7 @@
 
 plugins {
     application
+    id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 repositories {
@@ -31,4 +32,10 @@ java {
 
 application {
     mainClass = "pcd.ass3.sudoku.CooperativeSudoku"
+}
+
+tasks.shadowJar {
+  manifest {
+    attributes(mapOf("Main-Class" to "pcd.ass3.sudoku.CooperativeSudoku"))
+  }
 }

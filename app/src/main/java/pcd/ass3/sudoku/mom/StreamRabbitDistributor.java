@@ -33,7 +33,7 @@ public class StreamRabbitDistributor implements DataDistributor {
     private final static String FIRST_STREAM_OFFSET = "first";
     private final String initial_cursors_offset = "last";
 
-    private Optional<String> rabbitHost;
+    private final Optional<String> rabbitHost = Optional.empty();
     private DataDistributorListener updateListener;
     private Optional<String> boardName;
     private Optional<Channel> channel;
