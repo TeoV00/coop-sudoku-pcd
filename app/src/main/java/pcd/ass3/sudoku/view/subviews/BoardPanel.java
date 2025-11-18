@@ -20,12 +20,12 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
+import pcd.ass3.sudoku.common.Pair;
 import pcd.ass3.sudoku.controller.Controller;
 import pcd.ass3.sudoku.domain.Domain.BoardInfo;
 import pcd.ass3.sudoku.domain.Domain.CellUpdate;
 import pcd.ass3.sudoku.domain.Domain.UserInfo;
 import pcd.ass3.sudoku.domain.Pos;
-import pcd.ass3.sudoku.utils.Pair;
 import pcd.ass3.sudoku.view.UpdateObserver;
 
 
@@ -205,10 +205,6 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
     }
 
     @Override
-    public void notifyError(String errMsg, Optional<String> description) {
-    }
-
-    @Override
     public void joined(BoardInfo boardInfo) {
         int[][] riddle = boardInfo.riddle();
 
@@ -236,6 +232,10 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
                 consume.accept(new Pair(arr[r][c], new Pair<>(r, c)));
            } 
         }
+    }
+
+    @Override
+    public void notifyError(String errMsg, Optional<String> description) {
     }
     
 }
