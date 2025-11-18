@@ -12,12 +12,12 @@ public interface DataDistributorListener {
     /**
      * New sudoku board updates has been made by players.
      */
-    public void boardUpdate(JsonData edits);
+    public void cellUpdated(JsonData edits);
 
     /**
      * New cursor updates has been made by player.
      */
-    public void cursorsUpdate(JsonData cursor);
+    public void cursorsUpdated(JsonData cursor);
 
     /**
      * Received errors.

@@ -17,7 +17,7 @@ import pcd.ass3.sudoku.view.UpdateObserver;
 public class ControllerImpl implements Controller, DataDistributorListener {
 
     private final DataDistributor dataDistributor;
-    private UpdateObserver observer;
+    private Optional<UpdateObserver> observer;
     private Optional<BoardInfo> boardInfoJoined;
     private int[][] localSolution;
     private boolean isSolved;
@@ -26,6 +26,7 @@ public class ControllerImpl implements Controller, DataDistributorListener {
 
     public ControllerImpl(DataDistributor dataDistributor) {
         this.dataDistributor = dataDistributor;
+        this.observer = Optional.empty();
         this.nickname = Optional.empty();
         this.userHexColor = Optional.empty();
         this.isSolved = false;
@@ -41,12 +42,12 @@ public class ControllerImpl implements Controller, DataDistributorListener {
     public void joined() {}
 
     @Override
-    public void boardUpdate(DataDistributor.JsonData jsonData) {
+    public void cellUpdated(DataDistributor.JsonData jsonData) {
         if (!this.isSolved) {
             var edits = Domain.CellUpdate.fromJson(jsonData.getJsonString());
             cacheEdits(edits);
             checkBoardSolution();
-            observer.cellUpdate(edits);
+            observer.ifPresent(o -> o.cellUpdate(edits));
         }
     }
 
@@ -56,7 +57,7 @@ public class ControllerImpl implements Controller, DataDistributorListener {
             .orElse(false);
 
         if (isSolved) {
-            observer.boardSolved();
+            observer.ifPresent(o -> o.boardSolved());
             this.isSolved = true;
         }
     }
@@ -73,9 +74,9 @@ public class ControllerImpl implements Controller, DataDistributorListener {
     }
 
     @Override
-    public void cursorsUpdate(DataDistributor.JsonData cursor) {
+    public void cursorsUpdated(DataDistributor.JsonData cursor) {
         var userInfo = Domain.UserInfo.fromJson(cursor.getJsonString());
-        observer.cursorsUpdate(userInfo);
+        observer.ifPresent(o -> o.cursorsUpdate(userInfo));
     }
 
     @Override
@@ -84,8 +85,10 @@ public class ControllerImpl implements Controller, DataDistributorListener {
         if (exc != null) {
             descr = Optional.ofNullable(exc.getMessage());
         }
-        System.out.println(errMsg);
-        observer.notifyError(errMsg, descr);
+        System.out.println(errMsg + exc);
+        if (observer.isPresent()) {
+            observer.get().notifyError(errMsg, descr);
+        }
     }
 
     @Override
@@ -95,13 +98,13 @@ public class ControllerImpl implements Controller, DataDistributorListener {
             this.localSolution = null;
             this.isSolved = false;
         }
-        observer.boardLeft(hasLeft);
+        observer.ifPresent(o -> o.boardLeft(hasLeft));
     }
 
     @Override
     public void boardRegistered(DataDistributor.JsonData data) {
         var boardData = BoardInfo.fromJson(data.getJsonString());
-        observer.newBoardCreated(boardData.name());
+        observer.ifPresent(o -> o.newBoardCreated(boardData.name()));
     }
 
     /** 
@@ -138,7 +141,7 @@ public class ControllerImpl implements Controller, DataDistributorListener {
             };
             this.dataDistributor.registerBoard(jsonData);
         } else {
-            this.observer.notifyError("Board called " + name + " already exists", Optional.empty());
+            observer.ifPresent(o -> o.notifyError("Board called " + name + " already exists", Optional.empty()));
         }
     }
 
@@ -172,7 +175,7 @@ public class ControllerImpl implements Controller, DataDistributorListener {
         boardInfoOf(boardName).ifPresent(info -> {
             this.boardInfoJoined = Optional.of(info);
             this.localSolution = info.riddle();
-            observer.joined(info);
+            observer.ifPresent(o -> o.joined(info));
         });
     }
 
@@ -183,7 +186,7 @@ public class ControllerImpl implements Controller, DataDistributorListener {
 
     @Override
     public void setObserver(UpdateObserver observer) {
-        this.observer = observer;
+        this.observer = Optional.ofNullable(observer);
     }
 
 }

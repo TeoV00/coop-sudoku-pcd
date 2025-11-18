@@ -112,7 +112,7 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
                 try {
                     String msgBody = new String(msg.getBody(), "UTF-8");
                     //maybe here i wanna get some info from msg
-                    updateListener.boardUpdate((JsonData) () -> msgBody);
+                    updateListener.cellUpdated((JsonData) () -> msgBody);
                 } catch (UnsupportedEncodingException exc) {
                     updateListener.notifyErrors("Encoding error", exc);
                 }
@@ -121,7 +121,7 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
             consumeMessages(usersc, this.channel, msg -> {
                 try {
                     String msgBody = new String(msg.getBody(), "UTF-8");
-                    updateListener.cursorsUpdate((JsonData) () -> msgBody);
+                    updateListener.cursorsUpdated((JsonData) () -> msgBody);
                 } catch (UnsupportedEncodingException exc) {
                      updateListener.notifyErrors("Encoding error", exc);
                 }

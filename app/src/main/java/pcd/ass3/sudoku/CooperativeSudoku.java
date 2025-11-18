@@ -8,7 +8,7 @@ public class CooperativeSudoku {
 
     public static void main(String[] args) {
         StreamRabbitDistributor distr = new StreamRabbitDistributor();
-        //distr.setHost("192.168.0.21");
+        distr.setHost("localhost");
         var controller = new ControllerImpl(distr);
         var gui = new SudokuBoardUI(controller);
         controller.setObserver(gui);
