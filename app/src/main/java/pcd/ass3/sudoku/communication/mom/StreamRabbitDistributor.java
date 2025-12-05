@@ -1,4 +1,4 @@
-package pcd.ass3.sudoku.mom;
+package pcd.ass3.sudoku.communication.mom;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -16,7 +16,18 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Delivery;
 
+import pcd.ass3.sudoku.communication.ConfigurableDistributor;
+import pcd.ass3.sudoku.communication.DataDistributor;
+import pcd.ass3.sudoku.communication.DataDistributorListener;
+import pcd.ass3.sudoku.domain.Domain.BoardInfo;
+import pcd.ass3.sudoku.domain.Domain.CellUpdate;
+import pcd.ass3.sudoku.domain.Domain.UserInfo;
+
 public class StreamRabbitDistributor implements DataDistributor, ConfigurableDistributor {
+
+    private interface JsonData {
+        String getJsonString();
+    }
 
     private record QueueConfigs(
         boolean durable, 
@@ -44,6 +55,9 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
     @Override
     public void init(DataDistributorListener listener) {
         this.updateListener = listener;
+        //TODO optional<completable> o simile finchè la connessione non viene stabilita 
+        //puo passare tempo, this.channel risulta null
+        //TODO fare il costruttore o init le field 
         this.channel = createChannel();
         this.consumerTag = new HashMap<>();
         initBoardRegistry();
@@ -55,20 +69,23 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
     }
 
     private void initBoardRegistry() {
+        // TODO il channel viene creato e l'errore di timeout potrebbe 
+        // verfiicarsi non subito quindi sarebbe meglio restituire un Completable o simile cosi nella gui ci metto 
+        // la schemrata di caricamento --> altrimenti non va nulla e non viene nemmeno lanciato errore.
         this.registryChannel = createChannel();
         declareQueue(REGISTRY_QUEUE_NAME, this.registryChannel, DURABLE_STREAM_CONFIG);
         consumeMessages(REGISTRY_QUEUE_NAME, this.channel, msg -> {
             try {
                 String msgBody = new String(msg.getBody(), "UTF-8");
                 boardRegistry.add((JsonData) () -> msgBody);
-                updateListener.boardRegistered((JsonData) () -> msgBody);
+                updateListener.boardRegistered(BoardInfo.fromJson(msgBody));
             } catch (UnsupportedEncodingException ex) {}
         }, FIRST_STREAM_OFFSET);
     }
 
     @Override
-    public void registerBoard(JsonData data) {
-        publishTo(data.getJsonString(), REGISTRY_QUEUE_NAME, this.registryChannel);
+    public void registerBoard(BoardInfo data) {
+        publishTo(data.toJson(), REGISTRY_QUEUE_NAME, this.registryChannel);
     }
 
     private Optional<Channel> createChannel()  {
@@ -84,13 +101,13 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
     }
 
     @Override
-    public void shareUpdate(JsonData edits) {
-        publishTo(edits.getJsonString(), concat(boardName.orElse("unknown"), BOARD_UPDATE), this.channel);
+    public void shareUpdate(CellUpdate cellUpdate) {
+        publishTo(cellUpdate.toJson(), concat(boardName.orElse("unknown"), BOARD_UPDATE), this.channel);
     }
 
     @Override
-    public void updateCursor(JsonData cursorData) {
-        publishTo(cursorData.getJsonString(), concat(boardName.orElse("unknown"), USER_UPDATE), this.channel);
+    public void updateCursor(UserInfo userInfo) {
+        publishTo(userInfo.toJson(), concat(boardName.orElse("unknown"), USER_UPDATE), this.channel);
     }
 
     @Override
@@ -111,8 +128,7 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
             consumeMessages(edits, this.channel, msg -> {
                 try {
                     String msgBody = new String(msg.getBody(), "UTF-8");
-                    //maybe here i wanna get some info from msg
-                    updateListener.cellUpdated((JsonData) () -> msgBody);
+                    updateListener.cellUpdated(CellUpdate.fromJson(msgBody));
                 } catch (UnsupportedEncodingException exc) {
                     updateListener.notifyErrors("Encoding error", exc);
                 }
@@ -121,9 +137,9 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
             consumeMessages(usersc, this.channel, msg -> {
                 try {
                     String msgBody = new String(msg.getBody(), "UTF-8");
-                    updateListener.cursorsUpdated((JsonData) () -> msgBody);
+                    updateListener.cursorsUpdated(UserInfo.fromJson(msgBody));
                 } catch (UnsupportedEncodingException exc) {
-                     updateListener.notifyErrors("Encoding error", exc);
+                    updateListener.notifyErrors("Encoding error", exc);
                 }
             }, initial_cursors_offset);
             updateListener.joined();
@@ -212,8 +228,10 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
     }
 
     @Override
-    public List<JsonData> existingBoards() {
-        return List.copyOf(boardRegistry);
+    public List<BoardInfo> existingBoards() {
+        return boardRegistry.stream()
+                            .map(d -> BoardInfo.fromJson(d.getJsonString()))
+                            .toList();
     }
   
 }

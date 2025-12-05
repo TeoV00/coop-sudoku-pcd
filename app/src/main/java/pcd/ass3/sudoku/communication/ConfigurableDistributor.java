@@ -1,4 +1,4 @@
-package pcd.ass3.sudoku.mom;
+package pcd.ass3.sudoku.communication;
 
 public interface ConfigurableDistributor {
     /**

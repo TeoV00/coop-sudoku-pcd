@@ -2,7 +2,7 @@ package pcd.ass3.sudoku.domain;
 
 import com.google.gson.Gson;
 
-import pcd.ass3.sudoku.common.Pair;
+import pcd.ass3.sudoku.shared.Pair;
 
 public class Pos {
     private final Pair<Integer, Integer> pos;

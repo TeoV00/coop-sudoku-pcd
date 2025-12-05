@@ -1,15 +1,12 @@
-package pcd.ass3.sudoku.mom;
+package pcd.ass3.sudoku.communication;
 
 import java.util.List;
 
+import pcd.ass3.sudoku.domain.Domain.BoardInfo;
+import pcd.ass3.sudoku.domain.Domain.CellUpdate;
+import pcd.ass3.sudoku.domain.Domain.UserInfo;
+
 public interface DataDistributor {
-    /**
-     * Data type acceppted by a DataDistributor
-     * It provide data in json string format.
-     */
-    public interface JsonData {
-        String getJsonString();
-    }
 
     /**
      * Initialize setting <code>listener</code> to be updated on changes.
@@ -19,7 +16,7 @@ public interface DataDistributor {
     /**
      * Register new sudoku board providing <code>boardData</code> as JsonData.
      */
-    void registerBoard(JsonData boardData);
+    void registerBoard(BoardInfo boardInfo);
 
     /**
      * Subscribe to <code>boardName</code> sudoku board updates.
@@ -36,11 +33,11 @@ public interface DataDistributor {
      * 
      * Share to other players cell update.
      */
-    void shareUpdate(JsonData edits);
+    void shareUpdate(CellUpdate cellUpdate);
 
     /** Share user cursor info update. */
-    void updateCursor(JsonData cursorData);
+    void updateCursor(UserInfo userInfo);
 
     /** Returns list of all existing boards. */
-    List<JsonData> existingBoards();
+    List<BoardInfo> existingBoards();
 }

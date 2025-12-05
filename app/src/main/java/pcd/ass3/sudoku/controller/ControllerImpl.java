@@ -4,14 +4,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import pcd.ass3.sudoku.communication.DataDistributor;
+import pcd.ass3.sudoku.communication.DataDistributorListener;
 import pcd.ass3.sudoku.domain.Domain;
 import pcd.ass3.sudoku.domain.Domain.BoardInfo;
 import pcd.ass3.sudoku.domain.Domain.CellUpdate;
+import pcd.ass3.sudoku.domain.Domain.UserInfo;
 import pcd.ass3.sudoku.domain.Pos;
 import pcd.ass3.sudoku.domain.SudokuBoard;
 import pcd.ass3.sudoku.domain.SudokuGenerator;
-import pcd.ass3.sudoku.mom.DataDistributor;
-import pcd.ass3.sudoku.mom.DataDistributorListener;
 import pcd.ass3.sudoku.view.UpdateObserver;
 
 public class ControllerImpl implements Controller, DataDistributorListener {
@@ -42,9 +43,8 @@ public class ControllerImpl implements Controller, DataDistributorListener {
     public void joined() {}
 
     @Override
-    public void cellUpdated(DataDistributor.JsonData jsonData) {
+    public void cellUpdated(CellUpdate edits) {
         if (!this.isSolved) {
-            var edits = Domain.CellUpdate.fromJson(jsonData.getJsonString());
             cacheEdits(edits);
             checkBoardSolution();
             observer.ifPresent(o -> o.cellUpdate(edits));
@@ -74,8 +74,7 @@ public class ControllerImpl implements Controller, DataDistributorListener {
     }
 
     @Override
-    public void cursorsUpdated(DataDistributor.JsonData cursor) {
-        var userInfo = Domain.UserInfo.fromJson(cursor.getJsonString());
+    public void cursorsUpdated(UserInfo userInfo) {
         observer.ifPresent(o -> o.cursorsUpdate(userInfo));
     }
 
@@ -102,9 +101,8 @@ public class ControllerImpl implements Controller, DataDistributorListener {
     }
 
     @Override
-    public void boardRegistered(DataDistributor.JsonData data) {
-        var boardData = BoardInfo.fromJson(data.getJsonString());
-        observer.ifPresent(o -> o.newBoardCreated(boardData.name()));
+    public void boardRegistered(BoardInfo boardInfo) {
+        observer.ifPresent(o -> o.newBoardCreated(boardInfo.name()));
     }
 
     /** 
@@ -113,33 +111,24 @@ public class ControllerImpl implements Controller, DataDistributorListener {
 
     @Override
     public void setCellValue(Pos cellPos, int value) {
-
-        DataDistributor.JsonData jsonData = () -> {
-            return (new CellUpdate(cellPos, value)).toJson();
-        };
-        this.dataDistributor.shareUpdate(jsonData);
+        this.dataDistributor.shareUpdate(new CellUpdate(cellPos, value));
     }
 
     @Override
     public List<BoardInfo> getPublishedBoards() {
-        return this.dataDistributor.existingBoards()
-                                    .stream()
-                                    .map(d -> BoardInfo.fromJson(d.getJsonString()))
-                                    .toList();
+        return this.dataDistributor.existingBoards();
     }
 
     @Override
     public void createNewBoard(String name, int size) {
         if (boardInfoOf(name).isEmpty()) {
             SudokuBoard boards = SudokuGenerator.generate();
-            DataDistributor.JsonData jsonData = () -> {
-                return new BoardInfo(
+            var boardInfo = new BoardInfo(
                     boards.riddle(), 
                     boards.complete(), 
                     this.nickname.orElse("unknown"), 
-                    name).toJson();
-            };
-            this.dataDistributor.registerBoard(jsonData);
+                    name);
+            this.dataDistributor.registerBoard(boardInfo);
         } else {
             observer.ifPresent(o -> o.notifyError("Board called " + name + " already exists", Optional.empty()));
         }
@@ -154,13 +143,11 @@ public class ControllerImpl implements Controller, DataDistributorListener {
     @Override
     public void selectCell(Pos cellPos) {
         if (this.nickname.isPresent() && this.userHexColor.isPresent()) {
-            DataDistributor.JsonData jsonData = () -> {
-                return new Domain.UserInfo(
+            var userInfo = new Domain.UserInfo(
                     this.nickname.get(), 
                     this.userHexColor.get(), 
-                    cellPos).toJson();
-            };
-            this.dataDistributor.updateCursor(jsonData);
+                    cellPos);
+            this.dataDistributor.updateCursor(userInfo);
         }
     }
 
