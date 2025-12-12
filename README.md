@@ -1,9 +1,31 @@
+# Cooperative Sudoku - MOM Version
 
+## Architettura
+
+Dalla versione 3.9 di RabbitMQ viene introdotto il paradigma di Stream portando diversi vantaggi per specifiche applicazioni che prevedono:
+
+- **un'architettura fan-out**: dove molti *consumer* leggono lo stesso messaggio immutabile e persistente nello stream;
+
+- **il replay & time-travel**: dove i *consumers* necessitano di leggere più volte lo stesso messaggio o di muoversi fra i messaggi e iniziare la lettura da un punto preciso;
+
+- **un grande throughput**: dove una grande mole di dati deve essere processata in pochi secondi. Nel caso specifico del Sudoku collaborativo si ha una grande quantità di aggiornamenti dei cursoi degli utenti e delle celle nel caso vi siano molti utenti conessi alla stessa board.
+
+L'architettura generale comprende:
+
+- il `boardRegistry` per la pubblicazione delle board di gioco. Per comodità è anch'esso uno stream rabbitMQ; potrebbe essere un server, un database o persino un file condiviso;
+
+- lo stream `{boardName}-edits` in cui vengono pubblicati gli aggiornamenti delle celle;
+
+- lo stream `{boardName}-user-cursors` per gli aggiornamenti dei cursori dei giocatori.
+
+**NOTA**: per ogni board pubblicata vengono generati i due stream `edits` e `user-cursors` per la board `{boardName}`.
+
+<div align="center"><img src="./doc/Ass.3-MOM-Arch.png" width=400px></div>
+In figura l'architettura della sooluzione implementata basata su scambio di messaggi con MOM (Message-oriented middleware).
 
 ## UML - Work in progress :construction:
 
 ``` mermaid
-
 classDiagram
 
 DataDistributorListener <|.. Controller : implements
@@ -82,9 +104,7 @@ class Controller {
 
 ```
 
-
 ``` mermaid
-
 ---
 title: Parameter type in DataDistributor methods
 ---
@@ -121,7 +141,7 @@ Il 🟩 avrebbe una retention dei messaggi bassa = dopo X minuti/secondi e spazi
     1. Una esistente tra quelle registrate  
         1. Carico lo schema iniziale della board (presente in 🟫, in locale ho tutte le board iniziali dal momento in cui viene pubblicata una)
         2. Una volta completato il caricamento dello schema di gioco, sottoscrivo a 🟪 e 🟩
-    2. Creo una nuova (se non esistente)  
+    2. Creo una nuova (se non esistente)
         1. Registro/pubblico board in 🟫 
         2. punto 2.1
 3. Ogni selezione di cella viene pubblicata su 🟩  
@@ -130,8 +150,36 @@ Il 🟩 avrebbe una retention dei messaggi bassa = dopo X minuti/secondi e spazi
 * Se voglio **cambiare board** faccio leave board (discrivo dalle code 🟪🟩).
 
 
-~~Nel mentre mi salvo ogni tanto il tag di riferimento di un messaggio recente  così se per sbaglio ce un errore di connessione e mi voglio ricollegare non ricevo tutti i messaggi ma solo dall’ultimo ricevuto prima della sconnessione (dovrei salvare ad ogni messaggio che arriva il suo tag —> capire come si comporta il consume handler che si ritrova con un rif di partenza diverso , poi in realtà lo definisco una volta da dove partire a ricevere i msg) —> posso fare che l’app in caso di riconnessione si ricorda da che punto è non ricostruisce da zero la gui~~
+Nel seguente diagramma di sequenza viene presentato tutto lo stack di chiamate fra i doiversi componenti dell'architettura a seguito della richiesta di creazione di un nuovo Sudoku. Buona parte delle interazioni (se non tutte) dell'utente con la GUI innescano richieste nei livelli sottostanti.
 
+Ogni qualvolta che viene pubblicato un aggiornamento di qualsiasi genere (creazione di una board, modifica di una cella, moviemtno del cursore) in tutti i player partecipanti viene innescata la sequenza di chiamate dal numero 6 al 9 (riferimento allo schema sottostante).
+
+``` mermaid 
+sequenceDiagram
+autonumber
+  actor Player
+  participant GUI
+  participant Controller
+  participant DataDistributor
+  participant BoardRegistry@{ "type" : "queue" }
+  actor Other Players
+
+  Player ->> GUI: click on "new board" button
+  GUI ->>+ Controller: createNewBoard
+  Controller ->> Controller: generate sudoku board
+  Controller ->>- DataDistributor: registerBoard
+  DataDistributor->> BoardRegistry: publish json sudoku board
+  BoardRegistry --) DataDistributor: new board published
+  DataDistributor --) Controller: boardRegistered
+  Controller --) GUI: newBoardCreated
+  GUI --) Player: player see new board
+```
+
+### Aspetti implementativi di RabbitMQ
 Non memorizzo alcun riferimento perchè in caso di sconnnessione ci si riconnette e si sottoscrive nuovamente allo stream ottenendo tutti i messaggi dall'inizio.
 
-Si potrebbe rendere più efficente evitando di ricevere tutti i messaggi ma a partire solo da dove si era rimasti.
+Come possibile ottimizzazione si potrebbe memorizzare l'identificativo dell'ultimo messaggio ricevuto e in fase di riconnessione dichiarare il subscribe ai messaggi a partire da quel ID.
+
+## Interfaccia Grafica
+
+<div align="center"><img src="./doc/gui-structure.png" width=500px></div>
