@@ -22,7 +22,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
-import pcd.ass3.sudoku.shared.ErrorListener;
+import pcd.ass3.sudoku.utils.ErrorListener;
 import pcd.ass3.sudoku.controller.Controller;
 import pcd.ass3.sudoku.domain.Domain.BoardInfo;
 import pcd.ass3.sudoku.domain.Domain.CellUpdate;

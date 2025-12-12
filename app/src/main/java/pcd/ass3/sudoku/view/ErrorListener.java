@@ -1,4 +1,4 @@
-package pcd.ass3.sudoku.shared;
+package pcd.ass3.sudoku.view;
 
 import java.util.Optional;
 

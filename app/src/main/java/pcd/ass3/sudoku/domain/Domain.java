@@ -3,8 +3,8 @@ package pcd.ass3.sudoku.domain;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import static pcd.ass3.sudoku.shared.ArrayUtils.arrayToString;
-import static pcd.ass3.sudoku.shared.ArrayUtils.deepCopy;
+import static pcd.ass3.sudoku.utils.ArrayUtils.arrayToString;
+import static pcd.ass3.sudoku.utils.ArrayUtils.deepCopy;
 
 public interface Domain {
     Gson gson = new GsonBuilder().create();

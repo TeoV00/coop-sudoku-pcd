@@ -15,7 +15,7 @@ import javax.swing.JScrollPane;
 import javax.swing.ListModel;
 import javax.swing.border.EmptyBorder;
 
-import pcd.ass3.sudoku.shared.ErrorListener;
+import pcd.ass3.sudoku.utils.ErrorListener;
 
 public class ErrorsPanel extends JPanel implements ErrorListener {
 

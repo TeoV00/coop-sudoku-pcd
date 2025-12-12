@@ -1,4 +1,4 @@
-package pcd.ass3.sudoku.shared;
+package pcd.ass3.sudoku.utils;
 
 
 public class ArrayUtils {

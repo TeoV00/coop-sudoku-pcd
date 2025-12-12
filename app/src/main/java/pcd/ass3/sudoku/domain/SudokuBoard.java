@@ -2,7 +2,7 @@ package pcd.ass3.sudoku.domain;
 
 import com.google.gson.Gson;
 
-import pcd.ass3.sudoku.shared.Pair;
+import pcd.ass3.sudoku.utils.Pair;
 
 public class SudokuBoard {
     private final Pair<int[][], int[][]> boards;

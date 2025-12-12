@@ -1,7 +1,7 @@
 package pcd.ass3.sudoku;
 
+import pcd.ass3.sudoku.communication.mom.StreamRabbitDistributor;
 import pcd.ass3.sudoku.controller.ControllerImpl;
-import pcd.ass3.sudoku.mom.StreamRabbitDistributor;
 import pcd.ass3.sudoku.view.SudokuBoardUI;
 
 public class CooperativeSudoku {
