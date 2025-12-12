@@ -54,12 +54,12 @@ public class RmiClient implements DataDistributor {
 
     @Override
     public void shareUpdate(CellUpdate cellUpdate) {
-        this.server.shareUpdate(cellUpdate);
+        //this.server.shareUpdate(cellUpdate, );
     }
 
     @Override
     public void updateCursor(Domain.UserInfo userInfo) {
-        this.server.updateCursor(userInfo);
+        //this.server.updateCursor(userInfo);
     }
 
     @Override
