@@ -23,4 +23,9 @@ public class RmiListenerImpl implements RmiListener {
         listener.cursorsUpdated(userInfo);
     }
 
+    @Override
+    public void boardRegistered(Domain.BoardInfo boardInfo) throws RemoteException {
+        listener.boardRegistered(boardInfo);
+    }
+
 }

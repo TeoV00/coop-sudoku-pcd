@@ -17,6 +17,8 @@ public class RmiServerImpl implements RmiServer {
 
     public RmiServerImpl() {
         this.boardObservers = new HashMap<>();
+        this.boards = new HashMap<>();
+        this.boardState = new HashMap<>();
     }
 
     @Override
@@ -37,11 +39,23 @@ public class RmiServerImpl implements RmiServer {
     @Override
     public void registerBoard(Domain.BoardInfo boardInfo) throws RemoteException {
         boolean exists = this.boards.containsKey(boardInfo.name());
+        System.out.println(exists);
         if (!exists) {
+            System.out.println("Inserting new board");
             this.boards.put(boardInfo.name(), boardInfo);
             this.boardState.put(boardInfo.name(), boardInfo.riddle());
+            
+            this.boardObservers.values().stream()
+                .flatMap(l -> l.stream())
+                .distinct()
+                .forEach(rl -> {
+                    try {
+                        rl.boardRegistered(boardInfo);
+                    } catch (RemoteException ex) {
+                        System.err.println("Updating listeners: " + ex);
+                    }
+                });
         }
-        //TODO: get all listener registered and update them of new bopard published
     }
 
     @Override
