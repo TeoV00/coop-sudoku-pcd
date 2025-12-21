@@ -61,6 +61,7 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
 
         var usrSets = new UserConfigUI(controller, () -> {
             this.setVisible(true);
+            controller.getPublishedBoards().forEach(bi -> boardListModel.addElement(bi.name()));
         });
         usrSets.setLocationRelativeTo(this);
         usrSets.setAlwaysOnTop(true);
