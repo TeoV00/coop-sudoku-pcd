@@ -9,7 +9,7 @@ public interface DataDistributorListener extends ErrorDistributorListener {
     /**
      * Board has been joined. Response to <code>DataDistributor.subscribe</code> method.
      */
-    public void joined();
+    public void joined(int[][] currentState);
 
     /**
      * New sudoku board updates has been made by players.

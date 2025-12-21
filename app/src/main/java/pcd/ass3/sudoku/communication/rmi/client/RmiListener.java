@@ -12,5 +12,6 @@ public interface RmiListener extends Remote {
     public void cellUpdated(CellUpdate edits) throws RemoteException;
     public void cursorsUpdated(UserInfo userInfo) throws RemoteException;
     public void boardRegistered(BoardInfo boardInfo) throws RemoteException;
-
+    public void boardLeft(Boolean hasLeft) throws RemoteException;
+    public void joined(int[][] currentState) throws RemoteException;
 }

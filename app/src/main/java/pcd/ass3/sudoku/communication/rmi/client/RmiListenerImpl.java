@@ -25,8 +25,17 @@ public class RmiListenerImpl implements RmiListener {
 
     @Override
     public void boardRegistered(Domain.BoardInfo boardInfo) throws RemoteException {
-        System.out.println("RmiListener: " +  boardInfo);
         listener.boardRegistered(boardInfo);
+    }
+
+    @Override
+    public void boardLeft(Boolean hasLeft) throws RemoteException {
+        listener.boardLeft(hasLeft);
+    }
+
+    @Override
+    public void joined(int[][] currentState) throws RemoteException {
+        listener.joined(currentState);
     }
 
 }

@@ -32,6 +32,7 @@ public class RmiServerImpl implements RmiServer {
         var boardObs = this.boardObservers.getOrDefault(boardName, Collections.synchronizedList(new ArrayList<>()));
         boardObs.add(listener);
         this.boardObservers.put(boardName, boardObs);
+        listener.joined(boardState.get(boardName));
     }
 
     @Override
@@ -39,6 +40,7 @@ public class RmiServerImpl implements RmiServer {
         var boardObs = this.boardObservers.get(boardName);
         boardObs.remove(listener);
         this.boardObservers.put(boardName, boardObs);
+        listener.boardLeft(true);
     }
 
     @Override
