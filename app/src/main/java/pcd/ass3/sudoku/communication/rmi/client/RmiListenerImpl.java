@@ -7,7 +7,7 @@ import pcd.ass3.sudoku.domain.Domain;
 
 public class RmiListenerImpl implements RmiListener {
 
-    private DataDistributorListener listener;
+    private final DataDistributorListener listener;
 
     public RmiListenerImpl(DataDistributorListener listener) {
         this.listener = listener;
@@ -25,6 +25,7 @@ public class RmiListenerImpl implements RmiListener {
 
     @Override
     public void boardRegistered(Domain.BoardInfo boardInfo) throws RemoteException {
+        System.out.println("RmiListener: " +  boardInfo);
         listener.boardRegistered(boardInfo);
     }
 

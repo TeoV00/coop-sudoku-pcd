@@ -2,57 +2,58 @@ package pcd.ass3.sudoku.communication.rmi.server;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import pcd.ass3.sudoku.communication.rmi.client.RmiListener;
 import pcd.ass3.sudoku.domain.Domain;
 
 public class RmiServerImpl implements RmiServer {
 
+    /**
+     * Name used to share to all clients updates about boards published;
+     * I used same mechanism used by board updates notification.
+     */
+    public final String GLOBAL_UPDATES_TOPIC = "GLOBAL";
     private final Map<String, List<RmiListener>> boardObservers;
-    private Map<String, Domain.BoardInfo> boards;
-    private Map<String, int[][]> boardState;
+    private final Map<String, Domain.BoardInfo> boards;
+    private final Map<String, int[][]> boardState;
 
     public RmiServerImpl() {
-        this.boardObservers = new HashMap<>();
-        this.boards = new HashMap<>();
-        this.boardState = new HashMap<>();
+        this.boardObservers = new ConcurrentHashMap<>();
+        this.boards = new ConcurrentHashMap<>();
+        this.boardState = new ConcurrentHashMap<>();
     }
 
     @Override
     public void registerListener(RmiListener listener, String boardName) throws RemoteException {
-        var boardObs = this.boardObservers.getOrDefault(boardName, new ArrayList<>());
+        var boardObs = this.boardObservers.getOrDefault(boardName, Collections.synchronizedList(new ArrayList<>()));
         boardObs.add(listener);
-        System.out.println(this.boardObservers.entrySet());
-        //TODO: check if listener is added 
+        this.boardObservers.put(boardName, boardObs);
     }
 
     @Override
     public void stopListening(RmiListener listener, String boardName) throws RemoteException {
-        var obs = this.boardObservers.get(boardName);
-        obs.remove(listener);
-        //TODO: check if listener is removed 
+        var boardObs = this.boardObservers.get(boardName);
+        boardObs.remove(listener);
+        this.boardObservers.put(boardName, boardObs);
     }
 
     @Override
     public void registerBoard(Domain.BoardInfo boardInfo) throws RemoteException {
         boolean exists = this.boards.containsKey(boardInfo.name());
-        System.out.println(exists);
         if (!exists) {
-            System.out.println("Inserting new board");
             this.boards.put(boardInfo.name(), boardInfo);
             this.boardState.put(boardInfo.name(), boardInfo.riddle());
-            
-            this.boardObservers.values().stream()
-                .flatMap(l -> l.stream())
-                .distinct()
+            this.boardObservers
+                .get(GLOBAL_UPDATES_TOPIC)
                 .forEach(rl -> {
                     try {
                         rl.boardRegistered(boardInfo);
                     } catch (RemoteException ex) {
-                        System.err.println("Updating listeners: " + ex);
+                        System.err.println("SERVER-ERROR: Updating listeners: " + ex);
                     }
                 });
         }

@@ -6,7 +6,6 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
-import java.util.Optional;
 
 import pcd.ass3.sudoku.communication.DataDistributor;
 import pcd.ass3.sudoku.communication.DataDistributorListener;
@@ -17,7 +16,6 @@ import pcd.ass3.sudoku.domain.Domain.CellUpdate;
 
 public class RmiClientDistributor implements DataDistributor {
 
-    private Optional<DataDistributorListener> listener;
     private final String serverName;
     private RmiServer server;
     private RmiListener remoteListener;
@@ -36,13 +34,13 @@ public class RmiClientDistributor implements DataDistributor {
 
     @Override
     public void init(DataDistributorListener listener) {
-        this.listener = Optional.ofNullable(listener);
         RmiListener rmiListener = new RmiListenerImpl(listener);
         try {
             this.remoteListener = (RmiListener) UnicastRemoteObject.exportObject(rmiListener, 0);
+            this.server.registerListener(rmiListener, "GLOBAL");
         } catch (RemoteException ex) {
+            System.err.println(ex);
         }
-        
     }
 
     @Override
