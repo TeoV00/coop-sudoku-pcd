@@ -4,7 +4,7 @@ import pcd.ass3.sudoku.domain.Domain.BoardInfo;
 import pcd.ass3.sudoku.domain.Domain.CellUpdate;
 import pcd.ass3.sudoku.domain.Domain.UserInfo;
 
-public interface DataDistributorListener {
+public interface DataDistributorListener extends ErrorDistributorListener {
 
     /**
      * Board has been joined. Response to <code>DataDistributor.subscribe</code> method.
@@ -20,11 +20,6 @@ public interface DataDistributorListener {
      * New cursor updates has been made by player.
      */
     public void cursorsUpdated(UserInfo userInfo);
-
-    /**
-     * Received errors.
-     */
-    public void notifyErrors(String errMsg, Exception exc);
 
     /**
      * Response to the <code>DataDistributor.unsubscribe()</code> request.
