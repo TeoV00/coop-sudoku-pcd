@@ -1,5 +1,6 @@
 package pcd.ass3.sudoku.communication.rmi.server;
 
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,22 +20,22 @@ public class RmiServerImpl implements RmiServer {
     }
 
     @Override
-    public void registerListener(RmiListener listener, String boardName) {
+    public void registerListener(RmiListener listener, String boardName) throws RemoteException {
         var boardObs = this.boardObservers.getOrDefault(boardName, new ArrayList<>());
         boardObs.add(listener);
+        System.out.println(this.boardObservers.entrySet());
         //TODO: check if listener is added 
     }
 
     @Override
-    public void stopListening(RmiListener listener, String boardName) {
+    public void stopListening(RmiListener listener, String boardName) throws RemoteException {
         var obs = this.boardObservers.get(boardName);
         obs.remove(listener);
         //TODO: check if listener is removed 
-        //this.boardObservers.put(boardName, );
     }
 
     @Override
-    public void registerBoard(Domain.BoardInfo boardInfo) {
+    public void registerBoard(Domain.BoardInfo boardInfo) throws RemoteException {
         boolean exists = this.boards.containsKey(boardInfo.name());
         if (!exists) {
             this.boards.put(boardInfo.name(), boardInfo);
@@ -44,20 +45,32 @@ public class RmiServerImpl implements RmiServer {
     }
 
     @Override
-    public void shareUpdate(Domain.CellUpdate cellUpdate, String boardName) {
+    public void shareUpdate(Domain.CellUpdate cellUpdate, String boardName) throws RemoteException {
         var state = this.boardState.get(boardName);
         var p = cellUpdate.cellPos();
         state[p.row()][p.col()] = cellUpdate.cellValue();
-        this.boardObservers.get(boardName).forEach(o -> o.cellUpdated(cellUpdate));
+        this.boardObservers.get(boardName).forEach(o -> {
+            try {
+                o.cellUpdated(cellUpdate);
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Override
-    public void updateCursor(Domain.UserInfo userInfo, String boardName) {
-        this.boardObservers.get(boardName).forEach(o -> o.cursorsUpdated(userInfo));
+    public void updateCursor(Domain.UserInfo userInfo, String boardName) throws RemoteException {
+        this.boardObservers.get(boardName).forEach(o -> {
+            try {
+                o.cursorsUpdated(userInfo);
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Override
-    public List<Domain.BoardInfo> existingBoards() {
+    public List<Domain.BoardInfo> existingBoards() throws RemoteException {
         return List.copyOf(this.boards.values());
     }
 

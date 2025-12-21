@@ -4,6 +4,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,42 +15,57 @@ import pcd.ass3.sudoku.domain.Domain;
 import pcd.ass3.sudoku.domain.Domain.BoardInfo;
 import pcd.ass3.sudoku.domain.Domain.CellUpdate;
 
-public class RmiClient implements DataDistributor {
+public class RmiClientDistributor implements DataDistributor {
 
     private Optional<DataDistributorListener> listener;
     private final String serverName;
     private RmiServer server;
-    private RmiListener updateListener;
+    private RmiListener remoteListener;
 
-    public RmiClient(String serverName) {
+    public RmiClientDistributor(String serverName) {
         this.serverName = serverName;
         try {
             Registry reg = LocateRegistry.getRegistry();
             this.server = (RmiServer) reg.lookup(serverName);
         } catch (RemoteException | NotBoundException e) {
-            this.listener.ifPresent(l -> l.notifyErrors("RMI Client init error: ", e));
+            System.err.println(e);
+            //TODO: connection refused
+            // this.listener.ifPresent(l -> l.notifyErrors("RMI Client init error: ", e));
         }
-        //this.updateListener = new RmiListener();
     }
 
     @Override
     public void init(DataDistributorListener listener) {
         this.listener = Optional.ofNullable(listener);
+        RmiListener rmiListener = new RmiListenerImpl(listener);
+        try {
+            this.remoteListener = (RmiListener) UnicastRemoteObject.exportObject(rmiListener, 0);
+        } catch (RemoteException ex) {
+        }
+        
     }
 
     @Override
     public void registerBoard(BoardInfo boardInfo) {
-        this.server.registerBoard(boardInfo);
+        try {
+            this.server.registerBoard(boardInfo);
+        } catch (RemoteException ex) {
+            System.getLogger(RmiClientDistributor.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
     }
 
     @Override
     public void subscribe(String boardName) {
-        //this.server.registerListener(RmiListener, boardName);
+        try {
+            this.server.registerListener(remoteListener, boardName);
+        } catch (RemoteException ex) {
+            System.getLogger(RmiClientDistributor.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
     }
 
     @Override
     public void unsubscribe() {
-        //this.server.stopListening(RmiListener);
+        //this.server.stopListening(remoteListener);
     }
 
     @Override
@@ -64,6 +80,11 @@ public class RmiClient implements DataDistributor {
 
     @Override
     public List<BoardInfo> existingBoards() {
-        return this.server.existingBoards();
+        try {
+            return this.server.existingBoards();
+        } catch (RemoteException ex) {
+            System.getLogger(RmiClientDistributor.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
+        return List.of();
     }
 }

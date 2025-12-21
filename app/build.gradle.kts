@@ -39,3 +39,10 @@ tasks.shadowJar {
     attributes(mapOf("Main-Class" to "pcd.ass3.sudoku.CooperativeSudoku"))
   }
 }
+
+tasks.create<JavaExec>("runRmiServer") {
+    group = "Java RMI"
+    description = "Run sudoku rmi server"
+    mainClass.set("pcd.ass3.sudoku.RmiServerMain")
+    classpath = project.sourceSets.main.get().runtimeClasspath
+}

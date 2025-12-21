@@ -9,8 +9,8 @@ import java.util.Optional;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 
-import pcd.ass3.sudoku.common.Pair;
 import pcd.ass3.sudoku.domain.Pos;
+import pcd.ass3.sudoku.utils.Pair;
 import static pcd.ass3.sudoku.view.ViewUtilities.makeBorder;
 
 public class CellButton extends JButton {

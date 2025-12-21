@@ -3,8 +3,9 @@ package pcd.ass3.sudoku.domain;
 import com.google.gson.Gson;
 
 import pcd.ass3.sudoku.utils.Pair;
+import java.io.Serializable;
 
-public class Pos {
+public class Pos implements Serializable {
     private final Pair<Integer, Integer> pos;
 
     public Pos(int row, int col) {

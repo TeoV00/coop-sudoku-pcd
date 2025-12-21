@@ -20,12 +20,12 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-import pcd.ass3.sudoku.common.Pair;
 import pcd.ass3.sudoku.controller.Controller;
 import pcd.ass3.sudoku.domain.Domain.BoardInfo;
 import pcd.ass3.sudoku.domain.Domain.CellUpdate;
 import pcd.ass3.sudoku.domain.Domain.UserInfo;
 import pcd.ass3.sudoku.domain.Pos;
+import pcd.ass3.sudoku.utils.Pair;
 import pcd.ass3.sudoku.view.UpdateObserver;
 
 

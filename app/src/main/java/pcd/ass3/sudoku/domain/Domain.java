@@ -1,5 +1,7 @@
 package pcd.ass3.sudoku.domain;
 
+import java.io.Serializable;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -9,7 +11,7 @@ import static pcd.ass3.sudoku.utils.ArrayUtils.deepCopy;
 public interface Domain {
     Gson gson = new GsonBuilder().create();
 
-    public record UserInfo(String nickname, String hexColor, Pos cursorPos){
+    public record UserInfo(String nickname, String hexColor, Pos cursorPos) implements Serializable{
         public String toJson() {
         return gson.toJson(this);
         }
@@ -18,7 +20,7 @@ public interface Domain {
         }
     }
 
-    public record UserEdit(String nickname, CellUpdate edits){
+    public record UserEdit(String nickname, CellUpdate edits) implements Serializable{
         public String toJson() {
         return gson.toJson(this);
         }
@@ -27,7 +29,7 @@ public interface Domain {
         }
     }
 
-    public record CellUpdate (Pos cellPos, int cellValue){
+    public record CellUpdate (Pos cellPos, int cellValue) implements Serializable{
         public String toJson() {
         return gson.toJson(this);
         }
@@ -41,7 +43,7 @@ public interface Domain {
         int[][] solution,
         String createdBy,
         String name
-    ){
+    ) implements Serializable{
         public String toJson() {
         return gson.toJson(this);
         }
