@@ -142,7 +142,7 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
                     updateListener.notifyErrors("Encoding error", exc);
                 }
             }, initial_cursors_offset);
-            updateListener.joined();
+            //updateListener.joined();
         }
     }
 

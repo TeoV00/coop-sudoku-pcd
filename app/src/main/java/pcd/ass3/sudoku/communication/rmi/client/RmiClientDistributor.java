@@ -18,14 +18,12 @@ import pcd.ass3.sudoku.domain.Domain.CellUpdate;
 
 public class RmiClientDistributor implements DataDistributor {
 
-    private final String serverName;
     private Optional<String> subscribedBoard;
     private Optional<ErrorDistributorListener> errorListener;
     private RmiServer server;
     private RmiListener remoteListener;
 
     public RmiClientDistributor(String serverName) {
-        this.serverName = serverName;
         this.subscribedBoard = Optional.empty();
         this.errorListener = Optional.empty();
         try {

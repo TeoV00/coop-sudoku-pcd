@@ -13,6 +13,7 @@ import pcd.ass3.sudoku.domain.Domain.UserInfo;
 import pcd.ass3.sudoku.domain.Pos;
 import pcd.ass3.sudoku.domain.SudokuBoard;
 import pcd.ass3.sudoku.domain.SudokuGenerator;
+import static pcd.ass3.sudoku.utils.ArrayUtils.extractMask;
 import pcd.ass3.sudoku.view.UpdateObserver;
 
 public class ControllerImpl implements Controller, DataDistributorListener {
@@ -40,7 +41,13 @@ public class ControllerImpl implements Controller, DataDistributorListener {
     }
 
     @Override
-    public void joined() {}
+    public void joined(BoardInfo boardInfo, int[][] state) {
+        System.out.println("CONTROLLER: joined at " + System.currentTimeMillis());
+        this.boardInfoJoined = Optional.ofNullable(boardInfo);
+        this.localSolution = state;
+        // is not so efficient
+        observer.ifPresent(o -> o.joined(boardInfo, extractMask(boardInfo.riddle(), state)));
+    }
 
     @Override
     public void cellUpdated(CellUpdate edits) {
@@ -160,15 +167,14 @@ public class ControllerImpl implements Controller, DataDistributorListener {
     @Override
     public void joinToBoard(String boardName) {
         boardInfoOf(boardName).ifPresent(info -> {
-            this.boardInfoJoined = Optional.of(info);
-            this.localSolution = info.riddle();
-            observer.ifPresent(o -> o.joined(info));
+            this.dataDistributor.subscribe(boardName);
         });
     }
 
     @Override
     public void boardLoaded() {
-        this.boardInfoJoined.ifPresent(info -> this.dataDistributor.subscribe(info.name()));
+        this.observer.ifPresent(o -> o.notifyError("board loaded", Optional.empty()));
+        //this.boardInfoJoined.ifPresent(info -> this.dataDistributor.subscribe(info.name()));
     }
 
     @Override

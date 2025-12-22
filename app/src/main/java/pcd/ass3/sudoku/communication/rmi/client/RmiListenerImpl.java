@@ -34,8 +34,8 @@ public class RmiListenerImpl implements RmiListener {
     }
 
     @Override
-    public void joined(int[][] currentState) throws RemoteException {
-        listener.joined(currentState);
+    public void joined(Domain.BoardInfo boardInfo, int[][] currentState) throws RemoteException {
+        listener.joined(boardInfo, currentState);
     }
 
 }

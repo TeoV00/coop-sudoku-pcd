@@ -5,7 +5,7 @@ import pcd.ass3.sudoku.domain.Domain.CellUpdate;
 import pcd.ass3.sudoku.domain.Domain.UserInfo;
 
 public interface UpdateObserver extends ErrorListener {
-    public void joined(BoardInfo boardInfo);
+    public void joined(BoardInfo boardInfo, int[][] currentState);
     public void cellUpdate(CellUpdate edits);
     public void cursorsUpdate(UserInfo cursor);
     public void boardLeft(Boolean hasLeft);

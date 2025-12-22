@@ -32,7 +32,7 @@ import pcd.ass3.sudoku.view.UpdateObserver;
 public final class BoardPanel extends JPanel implements UpdateObserver {
 
     private final JPanel gridPanel;
-    private JLabel boardNameLabel;
+    private final JLabel boardNameLabel;
     private final CellButton[][] cells;
     private Pair<Pos, JButton> selectedCell = null;
     private final Map<String, Pair<Pos, Color>> usersCursors;
@@ -205,14 +205,20 @@ public final class BoardPanel extends JPanel implements UpdateObserver {
     }
 
     @Override
-    public void joined(BoardInfo boardInfo) {
+    public void joined(BoardInfo boardInfo, int[][] currentState) {
         int[][] riddle = boardInfo.riddle();
-
         performOnEach(cells, d -> {
             int value = riddle[d.y().x()][d.y().y()];
             if (value != 0) {
                 d.x().setText( String.valueOf(value));
                 d.x().setEnabled(false); 
+            }
+        });
+        performOnEach(cells, d -> {
+            int value = currentState[d.y().x()][d.y().y()];
+            if (value != 0) {
+                d.x().setText( String.valueOf(value));
+                d.x().setEnabled(true); 
             }
         });
         this.controller.boardLoaded();

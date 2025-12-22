@@ -146,7 +146,7 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
      * Receives updates from Controller
      */
     @Override
-    public void joined(BoardInfo boardInfo) {
+    public void joined(BoardInfo boardInfo, int [][] state) {
         runAndValidate(() -> {
             boardList.setEnabled(false);
             joinButton.setEnabled(false);
@@ -155,7 +155,7 @@ public class SudokuBoardUI extends JFrame implements UpdateObserver {
             add(centralPanel, BorderLayout.CENTER);
             subViews.add((UpdateObserver) centralPanel);
             updateSubViews(v -> {
-                v.joined(boardInfo);
+                v.joined(boardInfo, state);
             });
         });
     }
