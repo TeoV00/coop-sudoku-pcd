@@ -114,11 +114,17 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
 
     @Override
     public void requestJoin(String boardName) {
-        //updateListener.joined();
-        /*
-        TODO:
-        Before start listening to updates you need to join the board and then request to be updated.
-         */
+        Optional<BoardInfo> info = existingBoards().stream()
+                                                .filter(i -> i.name().equals(boardName))
+                                                .findFirst();
+        if (info.isEmpty()) {
+            updateListener.notifyErrors("request Join", null);
+        } else {
+            BoardInfo boardInfo = info.get();
+            int size = boardInfo.riddle().length;
+            int[][] emptyState = new int[size][size];
+            updateListener.joined(boardInfo, emptyState);
+        }
     }
 
     @Override
