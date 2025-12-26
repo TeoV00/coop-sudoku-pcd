@@ -57,7 +57,17 @@ public class RmiClientDistributor implements DataDistributor {
     }
 
     @Override
-    public void subscribe(String boardName) {
+    public void requestJoin(String boardName) {
+        try {
+            this.server.requestBoardData(remoteListener, boardName);
+        } catch (RemoteException ex) {
+            System.getLogger(RmiClientDistributor.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            this.errorListener.ifPresent(l -> l.notifyErrors("Request join", ex));
+        }
+    }
+
+    @Override
+    public void startUpdatesListening(String boardName) {
         this.subscribedBoard = Optional.of(boardName);
         try {
             this.server.registerListener(remoteListener, boardName);
@@ -67,7 +77,7 @@ public class RmiClientDistributor implements DataDistributor {
     }
 
     @Override
-    public void unsubscribe() {
+    public void stopListening() {
         this.subscribedBoard.ifPresent(name -> {
             try {
                 this.server.stopListening(remoteListener, name);

@@ -19,15 +19,21 @@ public interface DataDistributor {
     void registerBoard(BoardInfo boardInfo);
 
     /**
-     * Subscribe to <code>boardName</code> sudoku board updates.
-     * 
+     * Request to join boardName board.
+     * Before start listening updates you must join the board.
      */
-    void subscribe(String boardName);
+    void requestJoin(String boardName);
 
     /**
-     * Stop receiving updates of previously subscribed sudoku board.
+     * Start listening updates of <code>boardName</code> sudoku board.
+     * 
      */
-    void unsubscribe();
+    void startUpdatesListening(String boardName);
+
+    /**
+     * Stop receiving updates of previously subscribed sudoku board otherwise do nothing.
+     */
+    void stopListening();
 
     /**
      * 

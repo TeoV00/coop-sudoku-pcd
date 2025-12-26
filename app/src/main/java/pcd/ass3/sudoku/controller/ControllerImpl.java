@@ -160,21 +160,21 @@ public class ControllerImpl implements Controller, DataDistributorListener {
 
     @Override
     public void leaveBoard() {
-        this.dataDistributor.unsubscribe();
+        this.dataDistributor.stopListening();
         this.boardInfoJoined = Optional.empty();
     }
 
     @Override
     public void joinToBoard(String boardName) {
         boardInfoOf(boardName).ifPresent(info -> {
-            this.dataDistributor.subscribe(boardName);
+            this.dataDistributor.requestJoin(boardName);
         });
     }
 
     @Override
     public void boardLoaded() {
         this.observer.ifPresent(o -> o.notifyError("board loaded", Optional.empty()));
-        //this.boardInfoJoined.ifPresent(info -> this.dataDistributor.subscribe(info.name()));
+        this.boardInfoJoined.ifPresent(info -> this.dataDistributor.startUpdatesListening(info.name()));
     }
 
     @Override

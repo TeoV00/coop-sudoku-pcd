@@ -25,6 +25,8 @@ import pcd.ass3.sudoku.domain.Domain.UserInfo;
 
 public class StreamRabbitDistributor implements DataDistributor, ConfigurableDistributor {
 
+
+
     private interface JsonData {
         String getJsonString();
     }
@@ -111,7 +113,16 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
     }
 
     @Override
-    public void subscribe(String boardName) {
+    public void requestJoin(String boardName) {
+        //updateListener.joined();
+        /*
+        TODO:
+        Before start listening to updates you need to join the board and then request to be updated.
+         */
+    }
+
+    @Override
+    public void startUpdatesListening(String boardName) {
         this.boardName = Optional.of(boardName);
         String edits = concat(boardName, BOARD_UPDATE);
         String usersc = concat(boardName, USER_UPDATE);
@@ -142,7 +153,6 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
                     updateListener.notifyErrors("Encoding error", exc);
                 }
             }, initial_cursors_offset);
-            //updateListener.joined();
         }
     }
 
@@ -205,7 +215,7 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
     }
 
     @Override
-    public void unsubscribe() {
+    public void stopListening() {
         this.channel.ifPresent(ch -> {
             this.consumerTag.entrySet().forEach(e -> {
                 String queueName = e.getKey();

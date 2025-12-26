@@ -32,7 +32,6 @@ public class RmiServerImpl implements RmiServer {
         var boardObs = this.boardObservers.getOrDefault(boardName, Collections.synchronizedList(new ArrayList<>()));
         boardObs.add(listener);
         this.boardObservers.put(boardName, boardObs);
-        listener.joined(boards.get(boardName), boardState.get(boardName));
     }
 
     @Override
@@ -91,4 +90,8 @@ public class RmiServerImpl implements RmiServer {
         return List.copyOf(this.boards.values());
     }
 
+    @Override
+    public void requestBoardData(RmiListener requester, String boardName) throws RemoteException {
+        requester.joined(boards.get(boardName), boardState.get(boardName));
+    }
 }
