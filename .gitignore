@@ -6,3 +6,4 @@ gradlew*
 gradle/wrapper/gradle-wrapper.jar
 gradle/libs.versions.toml
 .metals/*
+.bloop
