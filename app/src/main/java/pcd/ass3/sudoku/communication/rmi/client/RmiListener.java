@@ -8,7 +8,6 @@ import pcd.ass3.sudoku.domain.Domain.UserInfo;
 
 
 public interface RmiListener extends Remote {
-
     public void cellUpdated(CellUpdate edits) throws RemoteException;
     public void cursorsUpdated(UserInfo userInfo) throws RemoteException;
     public void boardRegistered(BoardInfo boardInfo) throws RemoteException;

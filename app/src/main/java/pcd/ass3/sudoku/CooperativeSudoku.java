@@ -10,12 +10,12 @@ public class CooperativeSudoku {
 
     public static void main(String[] args) {
         DataDistributor distr;
-        if (args.length > 0 && args[0].equals("rmi")) {
-            distr = new RmiClientDistributor("RmiServer");
-            System.out.println("RMI Version");
-        } else {
+        if (args.length > 0 && args[0].equals("rabbit-stream")) {
             distr = new StreamRabbitDistributor();
             System.out.println("Stream RABBITMQ Version");
+        } else {
+            distr = new RmiClientDistributor("RmiServer");
+            System.out.println("RMI Version");
         }
         //distr.setHost("192.168.0.2");
         var controller = new ControllerImpl(distr);
