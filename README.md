@@ -4,11 +4,11 @@
 L'architettura generale del Cooperative Sudoku, sia nella versione MOM che quella con RMI, prevede tre componenti principali che non dipendono dalla effettiva tecnologia utilizzata per la distribuzione delle informazioni delle board di gioco e dei giocatori.
 
 Come si può vedere nel seguente UML delle classi i componenti sono:
-- il `Controller`, che implementa l' interfaccia `DataDistributorListener` in quanto interessato agli aggiornamenti ricevuti dall'esterno;
-- il `DataDistributor`, si occupa della distribuzione e ricezione degli aggiornamenti della board a cui si sta giocando;
+- il `Controller`, implementa l'interfaccia `DataDistributorListener` in quanto interessato a tutti gli aggiornamenti che riguardano la board di gioco, i cursori degli utenti e le board disponibili pubblicate;
+- il `DataDistributor`, fulcro di questo progetto, si occupa della logica di condivisione, ricezione ed invio fra i diversi giocatori;
 - e la `GUI`, che impelementa l'interfaccia `UpdateObserver`.
 
-**UML - Work in progress :construction:**
+### Diagramma delle classi
 ``` mermaid
 classDiagram
 
@@ -54,13 +54,19 @@ classDiagram
 DataDistributorListener <|.. ControllerImpl
 Controller <|.. ControllerImpl
 
+ErrorDistributorListener <-- DataDistributorListener : extends
+
+class ErrorDistributorListener {
+  <<interface>>
+  + notifyErrors(String errMsg, Exception exc) void
+}
+
 class DataDistributorListener {
   <<interface>>
 
   + joined() void
   + cellUpdatd(JsonData jsonEdits) void 
   + cursorsUpdated(JsonData jsonCursor) void
-  + notifyErrors(String errMsg, Exception exc) void
   + boardLeft(Boolean hasLeft) void
   + newBoardCreated(JsonData data) void
 }
@@ -78,7 +84,7 @@ class Controller {
 
 ```
 
-``` mermaid
+<!-- ``` mermaid
 ---
 title: Parameter type in DataDistributor methods
 ---
@@ -87,14 +93,14 @@ class JsonData {
   <<interface>>
   + getJsonString() String
 }
-```
+``` -->
 
 ## Componente di distribuzione
+Le due versioni del Cooperative Sudoku sono caratterizzate dalla specifica implementazione del `DataDistributor`.
 
-● architettura decentralizzata basata su scambio di messaggi, usando MOM
-● secondo modo utilizzando un approccio basato su Distributed Object Computing,
-utilizzando Java RMI (in questo caso l'architettura non deve essere necessariamente
-decentralizzata).
+- La prima versione prevede un'architettura decentralizzata basata su scambio di messaggi, usando MOM (Message Oriented Middleware). La sua implementazione è `StreamRabbitDataDistributor` ed utilizza gli stream di [RabbitMQ](https://www.rabbitmq.com/docs/streams).
+
+- La seconda versione invece si basa sul Distributed Object Computing utilizzando [Java RMI](https://docs.oracle.com/javase/8/docs/technotes/guides/rmi/index.html) con architettura centralizzata (no replicazione del server). La sua implementazione è `RmiClientDistributor` e l'oggetto server è il `RmiServer`.
 
 ```mermaid
 classDiagram
@@ -114,6 +120,8 @@ class DataDistributor {
 ```
 
 ## Architettura decentralizzata usando MOM
+
+### Premessa
 Dalla versione 3.9 di RabbitMQ viene introdotto il paradigma di Stream portando diversi vantaggi per specifiche applicazioni che prevedono:
 
 - **un'architettura fan-out**: dove molti *consumer* leggono lo stesso messaggio immutabile e persistente nello stream;
@@ -122,7 +130,9 @@ Dalla versione 3.9 di RabbitMQ viene introdotto il paradigma di Stream portando 
 
 - **un grande throughput**: dove una grande mole di dati deve essere processata in pochi secondi. Nel caso specifico del Sudoku collaborativo si ha una grande quantità di aggiornamenti dei cursoi degli utenti e delle celle nel caso vi siano molti utenti conessi alla stessa board.
 
-L'architettura generale comprende:
+Considerando i vantaggi sopra e la tipologia del progetto si è deciso di utilizzare, anzichè le classiche *queue*, gli stream di RabbitMQ. Questa decisione porta sicuramente una gestione semplificata dei messaggi uno-molti e specialmente per il replay & time-travel.
+
+Sono previsti i seguenti stream RabbitMQ:
 
 - il `boardRegistry` per la pubblicazione delle board di gioco. Per comodità è anch'esso uno stream rabbitMQ; potrebbe essere un server, un database o persino un file condiviso (con opportuni meccanismi di accesso concorrente);
 
@@ -133,47 +143,20 @@ L'architettura generale comprende:
 **NOTA**: per ogni board pubblicata vengono generati i due stream `edits` e `user-cursors` per la board `{boardName}`.
 
 <div align="center"><img src="./doc/Ass.3-MOM-Arch.png" width=400px></div>
+
 In figura l'architettura della sooluzione implementata basata su scambio di messaggi con MOM (Message-oriented middleware) utilizzando nello specifico RabbitMQ-stream.
 
 <!-- DA SISTEMARE E INTEGRARE -->
-# Note-Appunti
 
-### RabbitDataDistributor  
-- [X] Tutti i metodi prendono in input una ~~stringa~~ `JsonData` json del Messaggio da inviare —> quindi è chi chiama il metodo che deve preparare i dati e convertirli in json  
-- [X] Gli handler dei messaggi ricevuti vengono definiti fuori ( da messaggio json string poi fuori questa classe uni si arrangia a convertire e gestire i dati)  
-- [x] Aggiungere metodo alla api così da sapere se esiste una coda o no (aggiungere una nuova coda stream che contiene tutte le board create con lo stato iniziale)  
-  
-  
-1. Chiedi se esiste già la board  
-2. Fai join (internamente fa subscribe a stream della board e collegamento consume handler mag ricevuti)  
-3. Se non esisteva (al esito del punto 1) allora dichaira/ pubblica nel registro delle Baird lo stato della board e il nome (su board registry)  
+### RabbitDataDistributor
+Nella fase di inizializzazione il componente **RabbitDataDistributor** si connette al server RabbitMQ e si registra come listener del *BoardRegistry* per ottenere le informazioni di tutte le board pubblicate in tempo reale.
 
-Alla fine quindi avrei tre stream:  
-  
-BoardRegistry 🟫🟫🟫🟫🟫🟫🟫🟫  
-{boardName}-user-cursors 🟩🟩🟩🟩🟩🟩🟩🟩  
-{boardName}-edits 🟪🟪🟪🟪🟪🟪🟪🟪  
-  
-Il 🟩 avrebbe una retention dei messaggi bassa = dopo X minuti/secondi e spazio occupato di 1MB cancella i messaggi pubblicati. Alla sottoscrizione è possibile ottenere solo l'ultimo messaggio pubblicato oppure N messaggi (anche tutti).
-  
-**Dinamica di collegamento base:**  
-1. Da 🟫 ottengo le board attive (e il loro schema iniziale)  
-2. Mi collego ad una board  
-    1. Una esistente tra quelle registrate  
-        1. Carico lo schema iniziale della board (presente in 🟫, in locale ho tutte le board iniziali dal momento in cui viene pubblicata una)
-        2. Una volta completato il caricamento dello schema di gioco, sottoscrivo a 🟪 e 🟩
-    2. Creo una nuova (se non esistente)
-        1. Registro/pubblico board in 🟫 
-        2. punto 2.1
-3. Ogni selezione di cella viene pubblicata su 🟩  
-4. Ogni modifica (inserimento o cancellazione di valore) di cella viene pubblicata su 🟪  
+#### Creazione nuova board
+La creazione di una nuova board prevede la generazione dello schema sudoku localmente e poi successivamente viene pubblicato un messaggio contenenete l'oggetto json `Domain.BoardInfo`.
 
-* Se voglio **cambiare board** faccio leave board (discrivo dalle code 🟪🟩).
+Ogni `BoardInfo` ricevuta pubblicata viene memorizzata nella lista `boardRegistry` del componente.
 
-Nel seguente diagramma di sequenza viene presentato tutto lo stack di chiamate fra i doiversi componenti dell'architettura a seguito della richiesta di creazione di un nuovo Sudoku. Buona parte delle interazioni (se non tutte) dell'utente con la GUI innescano richieste nei livelli sottostanti.
-
-Ogni qualvolta che viene pubblicato un aggiornamento di qualsiasi genere (creazione di una board, modifica di una cella, movimetno del cursore) in tutti i player partecipanti viene innescata la sequenza di chiamate dal numero 6 al 9 (riferimento allo schema sottostante).
-
+Di seguito se ne presenta il diagramma di sequenza:
 ``` mermaid 
 sequenceDiagram
 autonumber
@@ -182,7 +165,15 @@ autonumber
   participant Controller
   participant DataDistributor
   participant BoardRegistry@{ "type" : "queue" }
-  actor Other Players
+
+  box Cooperative Sudoku App
+  participant GUI
+  participant Controller
+  participant DataDistributor
+  end
+  box RabbitMQ
+  participant BoardRegistry
+  end
 
   Player ->> GUI: click on "new board" button
   GUI ->>+ Controller: createNewBoard
@@ -194,13 +185,148 @@ autonumber
   Controller --) GUI: newBoardCreated
   GUI --) Player: player see new board
 ```
+Cosi come l'autore della creazione di una nuova board anche tutti gli altri player sono soggetti alla sequenza di chiamate dal numero 6 al 9 ricevendo così le informazioni della nuova board.
 
-### Aspetti implementativi di RabbitMQ
-- Non memorizzo alcun riferimento perchè in caso di sconnnessione ci si riconnette e si sottoscrive nuovamente allo stream ottenendo tutti i messaggi dall'inizio.
+Si noti che finchè la board non viene pubblicata sullo stream `BoardRegistry` nemmeno l'autore della nuova board può vedere la board; questo permette di avere tutti player allienati.
 
-- Come possibile ottimizzazione si potrebbe memorizzare l'identificativo dell'ultimo messaggio ricevuto e in fase di riconnessione dichiarare il subscribe ai messaggi a partire da quel ID in modo da non dover riottenere tutti i messaggi dal primo.
+#### Join ad una board
+Una volta selezionato il nome della board a cui ci si vuole collegare, viene caricato lo schema iniziale vuoto (punti dal 2 al 5) e concluso il caricamento si sottoscrivono gli stream `edits` e `user-cursors` relativi alla board selezionata (punti dal 7 al 10).
+
+``` mermaid 
+sequenceDiagram
+autonumber
+  actor Player
+  participant GUI
+  participant Controller
+  participant DataDistributor
+  participant edits@{ "type" : "queue" }
+  participant userCursors@{ "type" : "queue" }
+
+  box Cooperative Sudoku App
+  participant GUI
+  participant Controller
+  participant DataDistributor
+  end
+
+  box RabbitMQ Streams of boardName
+  participant edits
+  participant userCursors
+  end
+
+  Player ->> GUI: "join" button cliked
+  GUI ->>+ Controller: joinToBoard(boardName)
+  Controller ->> DataDistributor: requestJoin(boardName)
+  DataDistributor --) Controller: joined(boardInfo, emptyState)
+  Controller --) GUI: joined(boardInfo, curState)
+  GUI --) Player: see board and edits
+  GUI ->> Controller: boardLoaded
+  Controller ->> DataDistributor: startUpdatesListening(boardName)
+  DataDistributor ->> edits: consume edit msgs
+  DataDistributor ->> userCursors: consume user cursors
+```
+
+### Presentazione dei metodi interni del componente DataDistributor
+
+#### *createChannel* - creazione del canale di comunicazione
+```java
+private Optional<Channel> createChannel()  {
+  ConnectionFactory factory = new ConnectionFactory();
+  factory.setHost(this.rabbitHost.orElse("localhost"));
+  Optional<Channel> optChannel = Optional.empty();
+  try {
+      optChannel = factory.newConnection().openChannel();
+  } catch (IOException | TimeoutException exc) {
+      updateListener.notifyErrors("Init error channel creation fail", exc);
+  }
+  return optChannel;
+}
+```
+
+#### *declareQueue* - dichiarazione di una coda
+La dichiarazione di una coda richiede la presenza di un *channel*, il nome della coda e la sua configurazione. Nel caso una coda/stream sia già presente questa non viene ricreata e viene restituito esito positivo.
+```java
+private Optional<DeclareOk> declareQueue(String name, Optional<Channel> channel, QueueConfigs configs) {
+  if (channel.isPresent()) {
+    try {
+      DeclareOk isOk = channel.get().queueDeclare(name,
+              configs.durable,
+              configs.notExclusive,
+              configs.notAutoDelete,
+              configs.params);
+      return Optional.of(isOk);
+    } catch (IOException exc) {
+      this.updateListener.notifyErrors("Declaration queue", exc);
+    }
+  }
+  return Optional.empty();
+}
+```
+
+#### *consumeMessages* - dichiarazione dell'hanlder per il consumo di messaggi
+Questo metodo configura il processo di ricezione dei messaggi dallo stream. Richiede il nome della coda `queueName`, il canale `channel`, la funzione di callback per gestire i messaggi ricevuti, e l'offset `consumeOffset` a partire dal quale iniziare a ricevere i messaggi.
+
+In riferimento al diagramma di sequenza del join di una board, nei punti 9 e 10 viene chiamato esattamente questo metodo.
+
+```java
+private void consumeMessages(String queueName, Optional<Channel> channel, Consumer<Delivery> consume, String consumeOffset) {
+  Optional<String> tag = Optional.empty();
+  if (channel.isPresent()) {
+    Channel ch = channel.get();
+    boolean autoAck = false;
+    try {
+      ch.basicQos(PREFETCH_COUNT);
+      String cTag = ch.basicConsume(queueName,
+          autoAck,
+          Collections.singletonMap("x-stream-offset", consumeOffset),
+          (consTag, msg) -> {
+            consume.accept(msg);
+            long deliveryTag = msg.getEnvelope().getDeliveryTag();
+            ch.basicAck(deliveryTag, true);
+          },
+          consTag -> {
+              System.out.println(consTag + " disconnected from " +  queueName);
+          }
+      );
+      tag = Optional.of(cTag);
+    } catch (IOException exc) {
+      this.updateListener.notifyErrors("Consuming Message", exc);
+    }
+  }
+  this.consumerTag.put(queueName, tag);
+}
+```
+
+#### *publishTo* - pubblicazione di un messaggio
+Questo metodo privato viene utilizzato per pubblicare un messaggio sul canale di nome `queueName` attraverso il canale `channel` se configurato.
+```java
+private void publishTo(String jsonMsg, String queueName, Optional<Channel> channel) {
+  channel.ifPresent(c -> {
+    try {
+      c.basicPublish("", queueName, null, jsonMsg.getBytes("UTF-8"));
+    } catch (IOException exc) {
+      String errMsg = "Error in publishing on queue" + queueName;
+      this.updateListener.notifyErrors(errMsg , exc);
+    }
+  });
+}
+```
+
+### Dettagli implementativi di RabbitMQ
+Negli stream ciascun messaggio possiede un *riferimento di offset* e all'atto della sottoscrizione dello stream è possibile indicare il riferimento di partenza per ricevere i messaggi. All'atto di sottoscrizione dello stream e possibile indicare uno dei seguenti valori:
+- `first`, si sottoscrive dal primo messaggio presente nello stream;
+- `last`, si sottoscrive dal messaggio più recente
+- `next`, stesso comportamento di non specificare alcun valore
+- numero indicante l'offset specifico
+- timestamp
+- intervallo
+
+Nell'implementazione attuale non viene memorizato alcun riferimento di *offset* specifico ma viene impostato su `first` per lo stream `edits` mentre `last` per lo stream `user-cursors` (di cui non interessa ricevere tutti gli aggiornamenti passati).
+
+Una possibille ottimizzazione futura potrebbe prevedere la memorizzazione dell'offset dell'utlimo messaggio ricevuto in modo da ridurre la mole di messaggi ricevuti in caso di reconnessione. 
 
 ## DataDistributor - versione RMI
+
+`RmiClientDistributor` è l'implementazione specifica del `DataDistributor` per la versione RMI del Sudoku cooperativo.
 
 ```mermaid
 classDiagram
@@ -217,13 +343,13 @@ class RmiServer {
 }
 ```
 
-Come da requisiti, seguendo l'approccio Distributed Object Computing, è stato anche sviluppato il server RMI nonchè l'oggetto distribuito fra i diversi client di ciascun giocatore connesso.
+Seguendo l'approccio Distributed Object Computing, è stato sviluppato il server RMI nonchè l'oggetto distribuito fra i diversi client di ciascun giocatore connesso.
 
-Per questa versione quindi come `DataDistributor` viene utilizzato il `RmiClientDistributor`; funge da oggetto client per interagire con il server RMI (`RmiServer`).
+Per questa versione quindi è stato implementato il `RmiClientDistributor` che funge da client nell'interazione con il server RMI (`RmiServer`).
 
-Per evitare di esporre indistintamente tutti i metodi del `Controller` all'oggetto remoto `RmiServer` è stato creato un livello di astrazione che permette al server remoto di accedere unicamente ai metodi dei client che riguardano la ricezione degli aggiornamenti della board, dei cursori e delle board create disponibili.
+Per mantenere l'interfaccia `DataDistributorListener` (e quindi il Controller che la implementa) agnostica dall'effetiva tecnologia utilizzata, è stata creata una nuova interfaccia `RmiListener` che estende `Remote` e funziona da adapter. Questa interfaccia è stata poi implementata dal `RmiListenerImpl`.
 
-Concretamente il server remoto vede i client connessi come `RmiListener`, di seguito ne viene riportata la definizione:
+Il server remoto si memorizza tutti i client dei giocatori per ciascuna board come `RmiListener`. Di seguito la dichiarazione dell'interfaccia e dei suoi metodi.
 
 ```java
 public interface RmiListener extends Remote {
@@ -234,18 +360,15 @@ public interface RmiListener extends Remote {
     public void joined(BoardInfo boardInfo, int[][] currentState) throws RemoteException;
 }
 ```
-
-In questo caso l'oggetto server viene registrato con nome `RmiServer` e l'oggetto remoto diventa recuperabile ed utilizzabile. 
-Il client prima ottiene il registro RMI quindi ottiene l'oggetto del server fornendo il nome registrato e una volta ottenuto può indirizzare le richieste di registrazione ad una board di gioco e anche pubblicare/ricevere tutti gli aggiornamenti per quella board.
-
-`RmiClientDistributor` è l'implementazione specifica del `DataDistributor` che utilizza RMI per la condivisione delle informazioni live tra i giocatori.
+L'oggetto server viene registrato con il nome `RmiServer` e l'oggetto remoto diventa recuperabile ed utilizzabile.
+Il client, fornendo il nome, chiede al registro RMI l'oggetto remoto del server e lo usa per propagare e salvare gli aggiornamenti della board e gli aggiornamenti degli utenti.
 
 
 ---
 Internamente l' `RmiServer` memorizza le informazioni dell'utente e delle varie board di gioco all'interno di Map in cui la chiave è il nome della board. 
 
 Per ciascuna board vengono memorizzati tutti gli `RmiListener` interessati agli aggiornamenti di una board, le board create e pubblicate e infine lo stato attuale della board con tutte le sue modifiche.
-Le informazioni vengono mantenute in modo thread-safe utilizzando `ConcurrentHashMap`.
+Le informazioni vengono memorizzate dentro una struttura dati thread-safe utilizzando l'implementazione `ConcurrentHashMap`.
 
 ```java
   public final String GLOBAL_UPDATES_TOPIC = "GLOBAL";
@@ -270,7 +393,6 @@ Di seguito viene mostrato il codice che implementa questo meccanismo di aggiorna
         });
     }
 ```
-
 
 ``` mermaid 
 ---
