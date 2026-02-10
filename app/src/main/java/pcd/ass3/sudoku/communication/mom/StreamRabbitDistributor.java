@@ -41,7 +41,7 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
     private final String REGISTRY_QUEUE_NAME = "board-registry";
     private final List<JsonData> boardRegistry = new ArrayList<>();
     private final String BOARD_UPDATE = "edits";
-    private final String USER_UPDATE = "user-cursors";
+    private final String CURSORS_UPDATE = "user-cursors";
     private static final int PREFETCH_COUNT = 200;
     private final static String FIRST_STREAM_OFFSET = "first";
     private final String initial_cursors_offset = "last";
@@ -109,7 +109,7 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
 
     @Override
     public void updateCursor(UserInfo userInfo) {
-        publishTo(userInfo.toJson(), concat(boardName.orElse("unknown"), USER_UPDATE), this.channel);
+        publishTo(userInfo.toJson(), concat(boardName.orElse("unknown"), CURSORS_UPDATE), this.channel);
     }
 
     @Override
@@ -131,7 +131,7 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
     public void startUpdatesListening(String boardName) {
         this.boardName = Optional.of(boardName);
         String edits = concat(boardName, BOARD_UPDATE);
-        String usersc = concat(boardName, USER_UPDATE);
+        String usersc = concat(boardName, CURSORS_UPDATE);
 
         Map<String, Object> args = new HashMap<>();
         args.put("x-queue-type", "stream");
@@ -140,7 +140,7 @@ public class StreamRabbitDistributor implements DataDistributor, ConfigurableDis
 
         var userOk = declareQueue(usersc, this.channel, new QueueConfigs(true, false, false, args));
         var editsOk = declareQueue(edits, this.channel, DURABLE_STREAM_CONFIG);
-
+ 
         if (userOk.isPresent() && editsOk.isPresent()) {
             consumeMessages(edits, this.channel, msg -> {
                 try {
