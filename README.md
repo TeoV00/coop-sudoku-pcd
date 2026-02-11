@@ -1,4 +1,9 @@
 # Cooperative Sudoku
+<div align="center">
+  <video width="50%" controls autoplay loop>
+    <source src="./doc/demo-video.mov" type="video/quicktime">
+  </video>
+</div>
 
 ## Architettura
 L'architettura generale del Cooperative Sudoku, sia nella versione MOM che quella con RMI, prevede tre componenti principali che non dipendono dalla effettiva tecnologia utilizzata per la distribuzione delle informazioni delle board di gioco e dei giocatori.
@@ -379,7 +384,7 @@ Le informazioni vengono memorizzate dentro una struttura dati thread-safe utiliz
 
 Per quanto riguarda le posizioni dei cursori di ciascun partecipante ad una board vengono direttamente propagati agli altri senza essere memorizzati; questa decisione previene la visualizzazione dei cursori di utenti inattivi al momento del *join* ad una board.
 
-Di seguito viene mostrato il codice che implementa questo meccanismo di aggiornamento broadcast quando un utente si muove su una board:
+sDi seguito se ne mostra il codice:
 
 ```java
   @Override
@@ -400,34 +405,29 @@ title: Sequence from Controller to RmiServer
 ---
 sequenceDiagram
 autonumber
+  actor Player 
+  box Cooperative Sudoku App - RMI
+  participant GUI
   participant Controller
   participant RmiDataDistributor
+  participant RmiListener
+  end
+
+  box Remote RMI Server
   participant RmiServer@{ "type" : "entity" }
+  end
 
+  Player ->> GUI: click on "new board" button
+  GUI ->> Controller : createNewBoard
   Controller ->> RmiDataDistributor: registerBoard
-  RmiDataDistributor ->> RmiServer: publish json sudoku board
-  RmiServer --) Controller : new board published
+  RmiDataDistributor ->> RmiServer: registerBoard(boardInfo)
+  RmiServer --) RmiListener : boardRegistered(boardInfo)
+  RmiListener --) Controller : boardRegistered(boardInfo)
+  Controller --) GUI : newBoardCreated
+  GUI --) Player : see updated board list
 ```
 
 ---
-
-```mermaid
----
-title: Updates from RmiServer to DataDistributorListener
----
-sequenceDiagram
-autonumber
-
-participant RmiServer@{ "type" : "entity" }
-participant RmiListener
-participant DataDistributorListener
-
-RmiServer ->> RmiListener: notify board updated
-RmiListener ->> DataDistributorListener: cursorsUpdated
-
-```
-
 
 ## Interfaccia Grafica
-
-<div align="center"><img src="./doc/gui-structure.png" width=500px></div>
+<div align="center"><img src="./doc/screen-board.png" width=46%> <img src="./doc/gui-structure.png" width=50%></div>
