@@ -1,9 +1,30 @@
-# Cooperative Sudoku
+# Cooperative Sudoku <p style="font-size: 12pt;">Corso di PCD - Assignment #3</p>
+
+<div align="center"><img src="./doc/screen-board.png" width=60%></div>
+
+Cooperative Sudoku è un progetto che mira a realizzare una versione distribuita e cooperativa del gioco del Sudoku. L'applicazione permette ai giocatori in rete di creare dinamicamente nuove griglie da risolvere o partecipare alla risoluzione di griglie già create in modo del tutto trasparente su quale tecnologia effettiva venga utlizzata per la sincronizzazione degli stati della griglia.
+
+<!-- ## Demo Video
 <div align="center">
   <video width="50%" controls autoplay loop>
     <source src="./doc/demo-video.mov" type="video/quicktime">
   </video>
-</div>
+</div> -->
+
+### Problema Affrontato
+Il problema principale è la realizzazione di una soluzione distribuita che garantisca consistenza e sincronizzazione dello stato della griglia tra tutti i giocatori. La soluzione deve permettere a giocatori in rete di partecipare dinamicamente, anche in caso di crash.
+
+### Soluzioni Proposte
+Da requisiti è richiesto lo sviluppo di due soluzioni basate su:
+
+1. **MOM (Message-Oriented Middleware)** per la comunicazione tra i giocatori;
+
+2. **Distributed Object Computing** utilizzando Java RMI (Remote Method Invocation);
+
+### Requisiti
+- Possibilità di partecipare dinamicamente alla risoluzione di una griglia.
+- Qualsiasi giocatore può entrare o uscire dinamicamente, anche a causa di crash, disconnessione o chiusura dell'app.
+- Consistenza dello stato della griglia e sincronizzazione delle selezioni tra tutti i giocatori.
 
 ## Architettura
 L'architettura generale del Cooperative Sudoku, sia nella versione MOM che quella con RMI, prevede tre componenti principali che non dipendono dalla effettiva tecnologia utilizzata per la distribuzione delle informazioni delle board di gioco e dei giocatori.
@@ -231,8 +252,9 @@ autonumber
 ```
 
 ### Presentazione dei metodi interni del componente DataDistributor
+<details>
+<summary><strong>createChannel - creazione del canale di comunicazione</strong></summary>
 
-#### *createChannel* - creazione del canale di comunicazione
 ```java
 private Optional<Channel> createChannel()  {
   ConnectionFactory factory = new ConnectionFactory();
@@ -246,9 +268,13 @@ private Optional<Channel> createChannel()  {
   return optChannel;
 }
 ```
+</details>
 
-#### *declareQueue* - dichiarazione di una coda
+<details>
+<summary><strong>declareQueue - dichiarazione di una coda</strong></summary>
+
 La dichiarazione di una coda richiede la presenza di un *channel*, il nome della coda e la sua configurazione. Nel caso una coda/stream sia già presente questa non viene ricreata e viene restituito esito positivo.
+
 ```java
 private Optional<DeclareOk> declareQueue(String name, Optional<Channel> channel, QueueConfigs configs) {
   if (channel.isPresent()) {
@@ -267,7 +293,11 @@ private Optional<DeclareOk> declareQueue(String name, Optional<Channel> channel,
 }
 ```
 
-#### *consumeMessages* - dichiarazione dell'hanlder per il consumo di messaggi
+</details>
+
+<details>
+<summary><strong>consumeMessages - dichiarazione dell'hanlder per il consumo di messaggi</strong></summary>
+
 Questo metodo configura il processo di ricezione dei messaggi dallo stream. Richiede il nome della coda `queueName`, il canale `channel`, la funzione di callback per gestire i messaggi ricevuti, e l'offset `consumeOffset` a partire dal quale iniziare a ricevere i messaggi.
 
 In riferimento al diagramma di sequenza del join di una board, nei punti 9 e 10 viene chiamato esattamente questo metodo.
@@ -300,8 +330,11 @@ private void consumeMessages(String queueName, Optional<Channel> channel, Consum
   this.consumerTag.put(queueName, tag);
 }
 ```
+</details>
 
-#### *publishTo* - pubblicazione di un messaggio
+<details>
+<summary><strong>publishTo - pubblicazione di un messaggio</strong></summary>
+
 Questo metodo privato viene utilizzato per pubblicare un messaggio sul canale di nome `queueName` attraverso il canale `channel` se configurato.
 ```java
 private void publishTo(String jsonMsg, String queueName, Optional<Channel> channel) {
@@ -315,6 +348,7 @@ private void publishTo(String jsonMsg, String queueName, Optional<Channel> chann
   });
 }
 ```
+</details>
 
 ### Dettagli implementativi di RabbitMQ
 Negli stream ciascun messaggio possiede un *riferimento di offset* e all'atto della sottoscrizione dello stream è possibile indicare il riferimento di partenza per ricevere i messaggi. All'atto di sottoscrizione dello stream e possibile indicare uno dei seguenti valori:
