@@ -371,15 +371,38 @@ Una possibille ottimizzazione futura potrebbe prevedere la memorizzazione dell'o
 classDiagram
 direction RL
 
-DataDistributor <|.. RmiClientDistributor : implements
 DataDistributorListener <|.. Controller : implements
 Controller "1" *-- DataDistributor
-RmiClientDistributor "1" *-- RmiServer
-RmiServer "*" *-- DataDistributorListener
+DataDistributor "1" *-- DataDistributorListener
 
-class RmiServer {
-  <<remote object>>
+%% RMI Implementation classes
+DataDistributor <|.. RmiClientDistributor : implements
+RmiClientDistributor "1" *-- RmiListener
+
+RmiListener "1" *-- DataDistributorListener
+
+namespace controller {
+  class Controller {
+  }
 }
+
+namespace communication {
+  class DataDistributor {
+  }
+  
+  class DataDistributorListener {
+  }
+}
+
+namespace communication.rmi.client {
+  class RmiClientDistributor {
+  }
+  
+  class RmiListener {
+  }
+}
+
+
 ```
 
 Seguendo l'approccio Distributed Object Computing, è stato sviluppato il server RMI nonchè l'oggetto distribuito fra i diversi client di ciascun giocatore connesso.
@@ -418,7 +441,7 @@ Le informazioni vengono memorizzate dentro una struttura dati thread-safe utiliz
 
 Per quanto riguarda le posizioni dei cursori di ciascun partecipante ad una board vengono direttamente propagati agli altri senza essere memorizzati; questa decisione previene la visualizzazione dei cursori di utenti inattivi al momento del *join* ad una board.
 
-sDi seguito se ne mostra il codice:
+Di seguito se ne mostra il codice:
 
 ```java
   @Override
